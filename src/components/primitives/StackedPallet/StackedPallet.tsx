@@ -5,6 +5,7 @@
 
 import { memo, useMemo } from 'react'
 import type { StackedPallet } from '@/core/entities/StackedPallet'
+import { ensureUniqueBoxIds } from '@/core/entities/StackedPallet'
 import type { Position3D } from '@/core/types'
 import { UNITS } from '@/core/constants'
 import { PalletComponent } from '../Pallet'
@@ -16,9 +17,9 @@ export interface StackedPalletComponentProps {
   position?: Position3D
   /** Rotación Y en grados (0, 90, 180, 270) */
   yRotation?: 0 | 90 | 180 | 270
-  /** ID del palet contenedor. Si se proporciona, cualifica los IDs de las cajas
-   *  como "palletId:boxId" para evitar selecciones cruzadas cuando varios pallets
-   *  comparten el mismo StackedPallet. */
+  /** ID del palet contenedor. Si se proporciona, se usa como contexto 
+   *  para generar IDs únicos de cajas. La librería garantiza automáticamente
+   *  que no hay conflictos de IDs entre pisos o palets. */
   palletId?: string
   selectedBoxId?: string | null
   highlightedBoxId?: string | null
@@ -45,10 +46,13 @@ export const StackedPalletComponent = memo<StackedPalletComponentProps>(
     onBoxClick,
     onBoxHover,
   }) {
-    // Helper: cualifica un boxId con el palletId si existe
-    const scopeId = (boxId: string) => palletId ? `${palletId}:${boxId}` : boxId
-    const matchesId = (boxId: string, targetId: string | null | undefined) =>
-      targetId != null && targetId === scopeId(boxId)
+    // Normalizar automáticamente los IDs de las cajas para garantizar unicidad
+    // La librería se encarga de esto internamente, el desarrollador no necesita preocuparse
+    const normalizedStack = useMemo(
+      () => ensureUniqueBoxIds(stackedPallet, palletId),
+      [stackedPallet, palletId],
+    )
+
     const s = UNITS.MM_TO_M
     const rotationY = useMemo(() => (yRotation * Math.PI) / 180, [yRotation])
 
@@ -56,7 +60,7 @@ export const StackedPalletComponent = memo<StackedPalletComponentProps>(
     const floorOffsets = useMemo(() => {
       const offsets: number[] = []
       let currentY = 0
-      for (const floor of stackedPallet.floors) {
+      for (const floor of normalizedStack.floors) {
         offsets.push(currentY)
         currentY += floor.pallet.dimensions.height
         // Altura de las cajas: máximo top
@@ -70,14 +74,14 @@ export const StackedPalletComponent = memo<StackedPalletComponentProps>(
         }
       }
       return offsets
-    }, [stackedPallet])
+    }, [normalizedStack])
 
     return (
       <group
         position={[position.x * s, position.y * s, position.z * s]}
         rotation={[0, rotationY, 0]}
       >
-        {stackedPallet.floors.map((floor, idx) => {
+        {normalizedStack.floors.map((floor, idx) => {
           const floorY = floorOffsets[idx]
           const palletTopY = floorY + floor.pallet.dimensions.height
 
@@ -95,15 +99,14 @@ export const StackedPalletComponent = memo<StackedPalletComponentProps>(
                   key={pb.id}
                   placedBox={{
                     ...pb,
-                    id: scopeId(pb.id),
                     position: {
                       x: pb.position.x,
                       y: pb.position.y + palletTopY,
                       z: pb.position.z,
                     },
                   }}
-                  selected={matchesId(pb.id, selectedBoxId)}
-                  highlighted={matchesId(pb.id, highlightedBoxId)}
+                  selected={selectedBoxId === pb.id}
+                  highlighted={highlightedBoxId === pb.id}
                   selectedColor={selectedColor}
                   highlightedColor={highlightedColor}
                   showLabel={showLabels}

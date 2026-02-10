@@ -19,6 +19,7 @@ import {
   useWarehouseValidation,
   TruckType,
   SCENE_PRESETS,
+  SeparatorMaterial,
 } from './lib'
 import type {
   Box,
@@ -27,6 +28,8 @@ import type {
   Room,
   PlacedBox,
   CameraPreset,
+  Separator,
+  PalletFloor,
 } from './lib'
 import './index.css'
 
@@ -72,6 +75,66 @@ function createSampleBoxes(): Box[] {
   ]
 }
 
+/** Helper: create boxes for a specific floor */
+function createFloorBoxes(floorIndex: number, boxType: 'heavy' | 'medium' | 'mixed'): Box[] {
+  const prefix = `f${floorIndex}`
+  
+  if (boxType === 'heavy') {
+    return Array.from({ length: 5 }, (_, i) =>
+      BoxFactory.create(
+        { width: 400, height: 300, depth: 600 },
+        {
+          id: `${prefix}-heavy-${i}`,
+          type: `Heavy ${i + 1}`,
+          weight: 25,
+          color: '#4a90d9',
+        },
+      ),
+    )
+  }
+  
+  if (boxType === 'medium') {
+    return Array.from({ length: 7 }, (_, i) =>
+      BoxFactory.create(
+        { width: 300, height: 250, depth: 400 },
+        {
+          id: `${prefix}-medium-${i}`,
+          type: `Medium ${i + 1}`,
+          weight: 12,
+          color: '#50b86c',
+        },
+      ),
+    )
+  }
+  
+  // mixed
+  return [
+    ...Array.from({ length: 3 }, (_, i) =>
+      BoxFactory.create(
+        { width: 350, height: 280, depth: 450 },
+        {
+          id: `${prefix}-mix-${i}`,
+          type: `Box ${i + 1}`,
+          weight: 15,
+          color: '#9c6fd9',
+        },
+      ),
+    ),
+    ...Array.from({ length: 3 }, (_, i) =>
+      BoxFactory.fragile(
+        { width: 250, height: 200, depth: 350 },
+        10,
+        {
+          id: `${prefix}-fragile-${i}`,
+          type: `Fragile ${i + 1}`,
+          weight: 5,
+          color: '#e8a838',
+        },
+      ),
+    ),
+  ]
+}
+
 function App() {
   const [activeTab, setActiveTab] = useState<DemoTab>('pallet')
   const [cameraPreset, setCameraPreset] = useState<CameraPreset>('perspective')
@@ -84,14 +147,20 @@ function App() {
   const boxes = useMemo(createSampleBoxes, [])
   const pallet = useMemo(() => PalletFactory.euro(), [])
 
-  // Packing
+  // Packing strategies
   const { availableStrategies, pack } = usePackingStrategy(strategyName)
+  const columnPack = usePackingStrategy('column').pack
+  const typeGroupPack = usePackingStrategy('type-group').pack
 
+  // ═══════════════════════════════════════════════════════════════
+  //   PALLET CONFIGURATIONS (diferentes pisos y combinaciones)
+  // ═══════════════════════════════════════════════════════════════
+
+  // Palet 1: Configuración simple con estrategia actual
   const packingResult = useMemo(
     () => pack(boxes, pallet),
     [pack, boxes, pallet],
   )
-
   const placedBoxes: PlacedBox[] = packingResult.placements
 
   const stackedPallet: StackedPallet = useMemo(
@@ -109,57 +178,295 @@ function App() {
     [pallet, placedBoxes],
   )
 
-  // Truck scene data
+  // Palet 2: Multi-piso apilado (3 pisos con separadores)
+  const multiFloorPallet: StackedPallet = useMemo(() => {
+    const floor0Boxes = createFloorBoxes(0, 'heavy')
+    const floor1Boxes = createFloorBoxes(1, 'medium')
+    const floor2Boxes = createFloorBoxes(2, 'mixed')
+
+    const result0 = columnPack(floor0Boxes, pallet)
+    const result1 = columnPack(floor1Boxes, pallet)
+    const result2 = columnPack(floor2Boxes, pallet)
+
+    const separator: Separator = {
+      id: 'sep-cardboard',
+      dimensions: { width: 1200, height: 5, depth: 800 },
+      material: SeparatorMaterial.CARDBOARD,
+      weight: 1,
+      metadata: {},
+    }
+
+    const floors: PalletFloor[] = [
+      {
+        level: 0,
+        pallet,
+        boxes: result0.placements,
+        separatorAbove: separator,
+      },
+      {
+        level: 1,
+        pallet,
+        boxes: result1.placements,
+        separatorAbove: separator,
+      },
+      {
+        level: 2,
+        pallet,
+        boxes: result2.placements,
+      },
+    ]
+
+    return {
+      id: 'multi-floor-3',
+      floors,
+      metadata: { description: '3 pisos con separadores' },
+    }
+  }, [pallet, columnPack])
+
+  // Palet 3: Doble piso con cajas pesadas
+  const doubleHeavyPallet: StackedPallet = useMemo(() => {
+    const floor0 = createFloorBoxes(10, 'heavy')
+    const floor1 = createFloorBoxes(11, 'heavy')
+
+    const result0 = typeGroupPack(floor0, pallet)
+    const result1 = typeGroupPack(floor1, pallet)
+
+    const woodSeparator: Separator = {
+      id: 'sep-wood',
+      dimensions: { width: 1200, height: 8, depth: 800 },
+      material: SeparatorMaterial.WOOD,
+      weight: 2.5,
+      metadata: {},
+    }
+
+    return {
+      id: 'double-heavy',
+      floors: [
+        {
+          level: 0,
+          pallet,
+          boxes: result0.placements,
+          separatorAbove: woodSeparator,
+        },
+        {
+          level: 1,
+          pallet,
+          boxes: result1.placements,
+        },
+      ],
+      metadata: { description: 'Doble piso pesado' },
+    }
+  }, [pallet, typeGroupPack])
+
+  // Palet 4: Cajas mixtas en un solo piso
+  const mixedPallet: StackedPallet = useMemo(() => {
+    const mixedBoxes = createFloorBoxes(20, 'mixed')
+    const result = pack(mixedBoxes, pallet)
+
+    return {
+      id: 'mixed-single',
+      floors: [
+        {
+          level: 0,
+          pallet,
+          boxes: result.placements,
+        },
+      ],
+      metadata: { description: 'Cajas mixtas' },
+    }
+  }, [pallet, pack])
+
+  // Palet 5: Solo cajas medianas densamente empaquetadas
+  const denseMediumPallet: StackedPallet = useMemo(() => {
+    const mediumBoxes = createFloorBoxes(30, 'medium')
+    const result = columnPack(mediumBoxes, pallet)
+
+    return {
+      id: 'dense-medium',
+      floors: [
+        {
+          level: 0,
+          pallet,
+          boxes: result.placements,
+        },
+      ],
+      metadata: { description: 'Cajas medianas' },
+    }
+  }, [pallet, columnPack])
+
+  // Truck scene data — combinación de diferentes palets
   const truck: Truck = useMemo(() => {
     const base = TruckFactory.fromPreset(TruckType.BOX)
     return {
       ...base,
       pallets: [
+        // Fila frontal
         {
-          id: 'pp-1',
-          stackedPallet,
+          id: 'truck-pp-1',
+          stackedPallet: multiFloorPallet,
           position: { x: 100, y: 0, z: 100 },
           yRotation: 0 as const,
         },
         {
-          id: 'pp-2',
-          stackedPallet,
-          position: { x: 100, y: 0, z: 1400 },
+          id: 'truck-pp-2',
+          stackedPallet: doubleHeavyPallet,
+          position: { x: 1300, y: 0, z: 100 },
+          yRotation: 0 as const,
+        },
+        // Fila media
+        {
+          id: 'truck-pp-3',
+          stackedPallet: stackedPallet,
+          position: { x: 100, y: 0, z: 1100 },
+          yRotation: 0 as const,
+        },
+        {
+          id: 'truck-pp-4',
+          stackedPallet: mixedPallet,
+          position: { x: 1300, y: 0, z: 1100 },
+          yRotation: 0 as const,
+        },
+        // Fila trasera
+        {
+          id: 'truck-pp-5',
+          stackedPallet: denseMediumPallet,
+          position: { x: 100, y: 0, z: 2100 },
+          yRotation: 0 as const,
+        },
+        {
+          id: 'truck-pp-6',
+          stackedPallet: multiFloorPallet,
+          position: { x: 1300, y: 0, z: 2100 },
+          yRotation: 0 as const,
+        },
+        // Fila más al fondo
+        {
+          id: 'truck-pp-7',
+          stackedPallet: doubleHeavyPallet,
+          position: { x: 100, y: 0, z: 3100 },
+          yRotation: 0 as const,
+        },
+        {
+          id: 'truck-pp-8',
+          stackedPallet: stackedPallet,
+          position: { x: 1300, y: 0, z: 3100 },
           yRotation: 0 as const,
         },
       ],
     }
-  }, [stackedPallet])
+  }, [stackedPallet, multiFloorPallet, doubleHeavyPallet, mixedPallet, denseMediumPallet])
 
-  // Warehouse scene data
+  // Warehouse scene data — distribución variada de palets
   const room: Room = useMemo(
     () => ({
       id: 'room-1',
       name: 'Zona de carga',
       floorPolygon: [
         { x: 0, z: 0 },
-        { x: 6000, z: 0 },
-        { x: 6000, z: 4000 },
-        { x: 0, z: 4000 },
+        { x: 8000, z: 0 },
+        { x: 8000, z: 6000 },
+        { x: 0, z: 6000 },
       ],
-      ceilingHeight: 3000,
+      ceilingHeight: 3500,
       pallets: [
+        // Primera fila
         {
-          id: 'wp-1',
-          stackedPallet,
+          id: 'wh-pp-1',
+          stackedPallet: multiFloorPallet,
           position: { x: 500, y: 0, z: 500 },
           yRotation: 0 as const,
         },
         {
-          id: 'wp-2',
-          stackedPallet,
-          position: { x: 2000, y: 0, z: 1201 },
+          id: 'wh-pp-2',
+          stackedPallet: stackedPallet,
+          position: { x: 1800, y: 0, z: 500 },
+          yRotation: 0 as const,
+        },
+        {
+          id: 'wh-pp-3',
+          stackedPallet: doubleHeavyPallet,
+          position: { x: 3100, y: 0, z: 500 },
+          yRotation: 0 as const,
+        },
+        {
+          id: 'wh-pp-4',
+          stackedPallet: mixedPallet,
+          position: { x: 4400, y: 0, z: 500 },
+          yRotation: 90 as const,
+        },
+        {
+          id: 'wh-pp-5',
+          stackedPallet: denseMediumPallet,
+          position: { x: 5900, y: 0, z: 500 },
+          yRotation: 0 as const,
+        },
+        // Segunda fila
+        {
+          id: 'wh-pp-6',
+          stackedPallet: doubleHeavyPallet,
+          position: { x: 500, y: 0, z: 1700 },
+          yRotation: 90 as const,
+        },
+        {
+          id: 'wh-pp-7',
+          stackedPallet: multiFloorPallet,
+          position: { x: 2200, y: 0, z: 1700 },
+          yRotation: 90 as const,
+        },
+        {
+          id: 'wh-pp-8',
+          stackedPallet: stackedPallet,
+          position: { x: 3800, y: 0, z: 1700 },
+          yRotation: 0 as const,
+        },
+        {
+          id: 'wh-pp-9',
+          stackedPallet: denseMediumPallet,
+          position: { x: 5100, y: 0, z: 1700 },
+          yRotation: 90 as const,
+        },
+        // Tercera fila
+        {
+          id: 'wh-pp-10',
+          stackedPallet: mixedPallet,
+          position: { x: 700, y: 0, z: 3000 },
+          yRotation: 0 as const,
+        },
+        {
+          id: 'wh-pp-11',
+          stackedPallet: multiFloorPallet,
+          position: { x: 2000, y: 0, z: 3000 },
+          yRotation: 0 as const,
+        },
+        {
+          id: 'wh-pp-12',
+          stackedPallet: doubleHeavyPallet,
+          position: { x: 3300, y: 0, z: 3000 },
+          yRotation: 90 as const,
+        },
+        // Cuarta fila (más al fondo)
+        {
+          id: 'wh-pp-13',
+          stackedPallet: stackedPallet,
+          position: { x: 1000, y: 0, z: 4400 },
+          yRotation: 0 as const,
+        },
+        {
+          id: 'wh-pp-14',
+          stackedPallet: denseMediumPallet,
+          position: { x: 2300, y: 0, z: 4400 },
+          yRotation: 0 as const,
+        },
+        {
+          id: 'wh-pp-15',
+          stackedPallet: multiFloorPallet,
+          position: { x: 3600, y: 0, z: 4400 },
           yRotation: 90 as const,
         },
       ],
       metadata: {},
     }),
-    [stackedPallet],
+    [stackedPallet, multiFloorPallet, doubleHeavyPallet, mixedPallet, denseMediumPallet],
   )
 
   // Metrics & Validation
