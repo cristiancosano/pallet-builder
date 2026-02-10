@@ -77,6 +77,29 @@ export const TruckEnvironment = memo<TruckEnvironmentProps>(function TruckEnviro
   const wheelWidth = 0.18
   const wheelY = chassisDropY - chassisH / 2 + wheelRadius * 0.3
 
+  // Grid rectangular personalizado para el remolque
+  const gridGeometry = useMemo(() => {
+    if (!resolvedShowGrid) return null
+    
+    const spacing = 0.5  // 500mm
+    const y = 0.002
+    const positions: number[] = []
+    
+    // Líneas verticales (eje X)
+    for (let x = 0; x <= tw; x += spacing) {
+      positions.push(x, y, 0, x, y, td)
+    }
+    
+    // Líneas horizontales (eje Z)
+    for (let z = 0; z <= td; z += spacing) {
+      positions.push(0, y, z, tw, y, z)
+    }
+    
+    const geo = new THREE.BufferGeometry()
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+    return geo
+  }, [resolvedShowGrid, tw, td])
+
   const solidWallMaterial = useMemo(
     () => (
       <meshStandardMaterial
@@ -135,16 +158,15 @@ export const TruckEnvironment = memo<TruckEnvironmentProps>(function TruckEnviro
       </mesh>
 
       {/* Grid del suelo del remolque */}
-      {resolvedShowGrid && (
-        <gridHelper
-          args={[
-            Math.max(tw, td),
-            Math.round(Math.max(tw, td) * 2),
-            truckStyle.gridColor,
-            truckStyle.gridSecondaryColor,
-          ]}
-          position={[tw / 2, 0.002, td / 2]}
-        />
+      {resolvedShowGrid && gridGeometry && (
+        <lineSegments geometry={gridGeometry}>
+          <lineBasicMaterial 
+            color={truckStyle.gridColor} 
+            opacity={0.5} 
+            transparent 
+            depthWrite={false}
+          />
+        </lineSegments>
       )}
 
       {/* ═══════════════════════════════════════════════════════
