@@ -161,6 +161,21 @@ Diccionario de términos utilizados en el proyecto. Este es nuestro **Lenguaje U
 - Base sobre la que se colocan cajas.
 - Tiene dimensiones, material, peso máximo, peso propio.
 
+**Tipos de Palets Estándar (Standard Pallet Types)**
+- El sistema incluye presets para los principales tipos de palets utilizados en logística internacional:
+  - **EUR/EPAL** — Palet europeo (1200×800×144mm, ISO 6780). El más común en Europa. También conocido como Europallet. Factory: `PalletFactory.euro()`
+  - **GMA** — Palet norteamericano estándar (1219×1016×145mm, 48"×40"). Estándar de la Grocery Manufacturers Association. Factory: `PalletFactory.gma()`
+  - **UK Standard** — Palet estándar del Reino Unido (1200×1000×150mm). Factory: `PalletFactory.uk()`
+  - **Asia Pallet** — Palet estándar asiático (1100×1100×150mm, ISO 6780). Factory: `PalletFactory.asia()`
+  - **Australian** — Palet estándar australiano (1165×1165×150mm). Factory: `PalletFactory.australian()`
+  - **Half EUR** — Medio palet europeo (800×600×144mm). Útil para cargas pequeñas. Factory: `PalletFactory.halfEuro()`
+  - **Quarter EUR** — Cuarto de palet europeo (600×400×144mm). Factory: `PalletFactory.quarterEuro()`
+  - **ISO 1** — Palet ISO 6780-1 (1200×1000×150mm). Equivalente al UK. Factory: `PalletFactory.iso1()`
+  - **ISO 2** — Palet ISO 6780-2 (1200×800×144mm). Equivalente al EUR. Factory: `PalletFactory.iso2()`
+- Los presets se definen en `STANDARD_PALLETS` (constants.ts) e incluyen dimensiones, material, peso máximo y peso propio.
+- Factory genérico: `PalletFactory.fromPreset('EUR')` o usar métodos específicos.
+- Ver → PalletFactory, PalletPreset.
+
 **Palet Parcial (Partial Pallet)**
 - Un palet cargado parcialmente.
 - Se puede apilar con separador encima de otro palet para optimizar espacio en camión cuando los pedidos son pequeños.

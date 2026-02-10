@@ -145,7 +145,16 @@ function App() {
   const [strategyName, setStrategyName] = useState('column')
 
   const boxes = useMemo(createSampleBoxes, [])
-  const pallet = useMemo(() => PalletFactory.euro(), [])
+  
+  // Diferentes tipos de palets estándar para demostrar variedad
+  const euroP = useMemo(() => PalletFactory.euro(), [])
+  const gmaP = useMemo(() => PalletFactory.gma(), [])
+  const ukP = useMemo(() => PalletFactory.uk(), [])
+  const asiaP = useMemo(() => PalletFactory.asia(), [])
+  const halfEurP = useMemo(() => PalletFactory.halfEuro(), [])
+
+  // Palet principal para la interfaz interactiva
+  const pallet = euroP
 
   // Packing strategies
   const { availableStrategies, pack } = usePackingStrategy(strategyName)
@@ -178,19 +187,19 @@ function App() {
     [pallet, placedBoxes],
   )
 
-  // Palet 2: Multi-piso apilado (3 pisos con separadores)
+  // Palet 2: Multi-piso apilado (3 pisos con separadores) - Palet GMA (americano)
   const multiFloorPallet: StackedPallet = useMemo(() => {
     const floor0Boxes = createFloorBoxes(0, 'heavy')
     const floor1Boxes = createFloorBoxes(1, 'medium')
     const floor2Boxes = createFloorBoxes(2, 'mixed')
 
-    const result0 = columnPack(floor0Boxes, pallet)
-    const result1 = columnPack(floor1Boxes, pallet)
-    const result2 = columnPack(floor2Boxes, pallet)
+    const result0 = columnPack(floor0Boxes, gmaP)
+    const result1 = columnPack(floor1Boxes, gmaP)
+    const result2 = columnPack(floor2Boxes, gmaP)
 
     const separator: Separator = {
       id: 'sep-cardboard',
-      dimensions: { width: 1200, height: 5, depth: 800 },
+      dimensions: { width: gmaP.dimensions.width, height: 5, depth: gmaP.dimensions.depth },
       material: SeparatorMaterial.CARDBOARD,
       weight: 1,
       metadata: {},
@@ -199,19 +208,19 @@ function App() {
     const floors: PalletFloor[] = [
       {
         level: 0,
-        pallet,
+        pallet: gmaP,
         boxes: result0.placements,
         separatorAbove: separator,
       },
       {
         level: 1,
-        pallet,
+        pallet: gmaP,
         boxes: result1.placements,
         separatorAbove: separator,
       },
       {
         level: 2,
-        pallet,
+        pallet: gmaP,
         boxes: result2.placements,
       },
     ]
@@ -219,21 +228,21 @@ function App() {
     return {
       id: 'multi-floor-3',
       floors,
-      metadata: { description: '3 pisos con separadores' },
+      metadata: { description: '3 pisos GMA (Americano)' },
     }
-  }, [pallet, columnPack])
+  }, [gmaP, columnPack])
 
-  // Palet 3: Doble piso con cajas pesadas
+  // Palet 3: Doble piso con cajas pesadas - Palet UK
   const doubleHeavyPallet: StackedPallet = useMemo(() => {
     const floor0 = createFloorBoxes(10, 'heavy')
     const floor1 = createFloorBoxes(11, 'heavy')
 
-    const result0 = typeGroupPack(floor0, pallet)
-    const result1 = typeGroupPack(floor1, pallet)
+    const result0 = typeGroupPack(floor0, ukP)
+    const result1 = typeGroupPack(floor1, ukP)
 
     const woodSeparator: Separator = {
       id: 'sep-wood',
-      dimensions: { width: 1200, height: 8, depth: 800 },
+      dimensions: { width: ukP.dimensions.width, height: 8, depth: ukP.dimensions.depth },
       material: SeparatorMaterial.WOOD,
       weight: 2.5,
       metadata: {},
@@ -244,55 +253,55 @@ function App() {
       floors: [
         {
           level: 0,
-          pallet,
+          pallet: ukP,
           boxes: result0.placements,
           separatorAbove: woodSeparator,
         },
         {
           level: 1,
-          pallet,
+          pallet: ukP,
           boxes: result1.placements,
         },
       ],
-      metadata: { description: 'Doble piso pesado' },
+      metadata: { description: 'Doble piso UK pesado' },
     }
-  }, [pallet, typeGroupPack])
+  }, [ukP, typeGroupPack])
 
-  // Palet 4: Cajas mixtas en un solo piso
+  // Palet 4: Cajas mixtas en un solo piso - Palet Asia
   const mixedPallet: StackedPallet = useMemo(() => {
     const mixedBoxes = createFloorBoxes(20, 'mixed')
-    const result = pack(mixedBoxes, pallet)
+    const result = pack(mixedBoxes, asiaP)
 
     return {
       id: 'mixed-single',
       floors: [
         {
           level: 0,
-          pallet,
+          pallet: asiaP,
           boxes: result.placements,
         },
       ],
-      metadata: { description: 'Cajas mixtas' },
+      metadata: { description: 'Cajas mixtas Asia' },
     }
-  }, [pallet, pack])
+  }, [asiaP, pack])
 
-  // Palet 5: Solo cajas medianas densamente empaquetadas
+  // Palet 5: Solo cajas medianas - Medio palet EUR
   const denseMediumPallet: StackedPallet = useMemo(() => {
     const mediumBoxes = createFloorBoxes(30, 'medium')
-    const result = columnPack(mediumBoxes, pallet)
+    const result = columnPack(mediumBoxes, halfEurP)
 
     return {
       id: 'dense-medium',
       floors: [
         {
           level: 0,
-          pallet,
+          pallet: halfEurP,
           boxes: result.placements,
         },
       ],
-      metadata: { description: 'Cajas medianas' },
+      metadata: { description: 'Medio EUR denso' },
     }
-  }, [pallet, columnPack])
+  }, [halfEurP, columnPack])
 
   // Truck scene data — combinación de diferentes palets
   const truck: Truck = useMemo(() => {
@@ -575,6 +584,39 @@ function App() {
                 </option>
               ))}
             </select>
+          </section>
+
+          {/* Pallet Info */}
+          <section className="panel">
+            <h3>Tipo de palet (demo)</h3>
+            <dl className="metrics">
+              <dt>Estándar</dt>
+              <dd>{String(pallet.metadata.preset || 'EUR')} - Europallet</dd>
+              <dt>Dimensiones</dt>
+              <dd>
+                {pallet.dimensions.width}×{pallet.dimensions.depth}×{pallet.dimensions.height} mm
+              </dd>
+              <dt>Carga máx.</dt>
+              <dd>{pallet.maxWeight} kg</dd>
+              <dt>Peso</dt>
+              <dd>{pallet.weight} kg</dd>
+            </dl>
+            <details style={{ marginTop: '8px' }}>
+              <summary style={{ cursor: 'pointer', fontSize: '0.9em', color: '#888' }}>
+                Ver otros tipos disponibles
+              </summary>
+              <ul style={{ fontSize: '0.85em', marginTop: '8px', paddingLeft: '20px' }}>
+                <li><strong>EUR/EPAL</strong> — 1200×800 mm (Europeo)</li>
+                <li><strong>GMA</strong> — 1219×1016 mm (Americano 48&quot;×40&quot;)</li>
+                <li><strong>UK</strong> — 1200×1000 mm (Reino Unido)</li>
+                <li><strong>ASIA</strong> — 1100×1100 mm (Asiático)</li>
+                <li><strong>AUSTRALIAN</strong> — 1165×1165 mm (Australia)</li>
+                <li><strong>HALF_EUR</strong> — 800×600 mm (Medio EUR)</li>
+                <li><strong>QUARTER_EUR</strong> — 600×400 mm (Cuarto EUR)</li>
+                <li><strong>ISO_1</strong> — 1200×1000 mm (ISO 6780)</li>
+                <li><strong>ISO_2</strong> — 1200×800 mm (ISO 6780)</li>
+              </ul>
+            </details>
           </section>
 
           {/* Strategy */}
