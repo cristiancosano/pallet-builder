@@ -26,6 +26,8 @@ export interface TruckSceneProps {
   /** Color del borde de highlight/hover (override del preset) */
   highlightedColor?: string
   showLabels?: boolean
+  /** Mostrar/ocultar el grid del suelo del remolque */
+  showGrid?: boolean
   cameraPreset?: CameraPreset
   onBoxClick?: (id: string) => void
   onBoxHover?: (id: string | null) => void
@@ -41,6 +43,7 @@ export const TruckScene = memo<TruckSceneProps>(function TruckScene({
   selectedColor,
   highlightedColor,
   showLabels = false,
+  showGrid,
   cameraPreset = 'perspective',
   onBoxClick,
   onBoxHover,
@@ -86,7 +89,7 @@ export const TruckScene = memo<TruckSceneProps>(function TruckScene({
         maxDistance={30}
       />
 
-      <TruckEnvironment truck={truck}>
+      <TruckEnvironment truck={truck} showGrid={showGrid}>
         {validPallets.map(pp => (
           <StackedPalletComponent
             key={pp.id}

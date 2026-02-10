@@ -63,12 +63,24 @@ export interface WarehouseStyle {
 }
 
 export interface TruckStyle {
-  /** Color del suelo */
+  /** Color del suelo del remolque */
   floorColor: string
-  /** Color de las paredes */
+  /** Color de las paredes del remolque */
   wallColor: string
   /** Opacidad de las paredes */
   wallOpacity: number
+  /** Mostrar grid en el suelo */
+  showGrid: boolean
+  /** Color principal del grid */
+  gridColor: string
+  /** Color secundario del grid */
+  gridSecondaryColor: string
+  /** Color de la cabina */
+  cabColor: string
+  /** Color del chasis / bastidor */
+  chassisColor: string
+  /** Color de las ruedas */
+  wheelColor: string
 }
 
 export interface ScenePreset {
@@ -131,6 +143,12 @@ export const PRESET_UNSTYLED: ScenePreset = {
     floorColor: '#8a7e72',
     wallColor: '#b0b0b0',
     wallOpacity: 0.35,
+    showGrid: true,
+    gridColor: '#666666',
+    gridSecondaryColor: '#999999',
+    cabColor: '#3a5f8a',
+    chassisColor: '#2a2a2a',
+    wheelColor: '#1a1a1a',
   },
 }
 
@@ -178,6 +196,12 @@ export const PRESET_INDUSTRIAL: ScenePreset = {
     floorColor: '#6e6358',
     wallColor: '#9eaab4',
     wallOpacity: 0.4,
+    showGrid: true,
+    gridColor: '#4a4a4a',
+    gridSecondaryColor: '#6a6a6a',
+    cabColor: '#2e4a6b',
+    chassisColor: '#1e1e1e',
+    wheelColor: '#111111',
   },
 }
 
