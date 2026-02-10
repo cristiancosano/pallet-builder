@@ -43,10 +43,12 @@ export const WarehouseEnvironment = memo<WarehouseEnvironmentProps>(
         mxZ = Math.max(mxZ, p.z * s)
       }
 
+      // Crear shape en 2D (XY). Cuando se rota -90° en X, Y → -Z
+      // Por eso usamos -pts[i].z para que quede correctamente orientado
       const sh = new THREE.Shape()
-      sh.moveTo(pts[0].x * s, pts[0].z * s)
+      sh.moveTo(pts[0].x * s, -pts[0].z * s)
       for (let i = 1; i < pts.length; i++) {
-        sh.lineTo(pts[i].x * s, pts[i].z * s)
+        sh.lineTo(pts[i].x * s, -pts[i].z * s)
       }
       sh.closePath()
 
@@ -89,16 +91,43 @@ export const WarehouseEnvironment = memo<WarehouseEnvironmentProps>(
     const centerX = (minX + maxX) / 2
     const centerZ = (minZ + maxZ) / 2
 
+    // Grid rectangular personalizado (gridHelper solo crea grids cuadrados)
+    const gridGeometry = useMemo(() => {
+      if (!resolvedShowGrid) return null
+      
+      const spacing = 0.5  // 500mm
+      const y = 0.01
+      const positions: number[] = []
+      
+      // Líneas verticales (eje X)
+      for (let x = minX; x <= maxX; x += spacing) {
+        positions.push(x, y, minZ, x, y, maxZ)
+      }
+      
+      // Líneas horizontales (eje Z)
+      for (let z = minZ; z <= maxZ; z += spacing) {
+        positions.push(minX, y, z, maxX, y, z)
+      }
+      
+      const geo = new THREE.BufferGeometry()
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+      return geo
+    }, [resolvedShowGrid, minX, maxX, minZ, maxZ])
+
     return (
       <group>
         {/* Suelo */}
-        <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.005, 0]} receiveShadow>
           <shapeGeometry args={[shape]} />
-          <meshStandardMaterial color={resolvedFloorColor} side={THREE.DoubleSide} roughness={preset.warehouse.floorRoughness} />
+          <meshStandardMaterial 
+            color={resolvedFloorColor} 
+            side={THREE.DoubleSide} 
+            roughness={preset.warehouse.floorRoughness}
+          />
         </mesh>
 
         {/* Paredes */}
-        <mesh geometry={wallGeometry} receiveShadow>
+        <mesh geometry={wallGeometry} position={[0, 0, 0]} receiveShadow>
           <meshStandardMaterial
             color={resolvedWallColor}
             side={THREE.DoubleSide}
@@ -108,12 +137,16 @@ export const WarehouseEnvironment = memo<WarehouseEnvironmentProps>(
           />
         </mesh>
 
-        {/* Grid */}
-        {resolvedShowGrid && (
-          <gridHelper
-            args={[Math.max(sizeX, sizeZ), Math.round(Math.max(sizeX, sizeZ)), preset.warehouse.gridColor, preset.warehouse.gridSecondaryColor]}
-            position={[centerX, 0.001, centerZ]}
-          />
+        {/* Grid personalizado */}
+        {resolvedShowGrid && gridGeometry && (
+          <lineSegments geometry={gridGeometry}>
+            <lineBasicMaterial 
+              color={preset.warehouse.gridColor} 
+              opacity={0.5} 
+              transparent 
+              depthWrite={false}
+            />
+          </lineSegments>
         )}
 
         {/* Iluminación almacén */}
