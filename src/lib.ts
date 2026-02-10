@@ -37,6 +37,28 @@ export {
 } from '@/core/constants'
 
 // ──────────────────────────────────────────────
+// Core — Scene Presets (visual themes)
+// ──────────────────────────────────────────────
+export type {
+  ScenePreset,
+  BoxStyle,
+  PalletStyle,
+  SeparatorStyle,
+  SelectionStyle,
+  WarehouseStyle,
+  TruckStyle,
+} from '@/core/presets'
+
+export {
+  PRESET_UNSTYLED,
+  PRESET_INDUSTRIAL,
+  SCENE_PRESETS,
+  DEFAULT_PRESET,
+} from '@/core/presets'
+
+export { PresetProvider, usePreset } from '@/context/PresetContext'
+
+// ──────────────────────────────────────────────
 // Core — Entities
 // ──────────────────────────────────────────────
 export type { Box } from '@/core/entities/Box'

@@ -8,6 +8,7 @@ import { Html } from '@react-three/drei'
 import * as THREE from 'three'
 import type { PlacedBox } from '@/core/entities/PlacedBox'
 import { UNITS } from '@/core/constants'
+import { usePreset } from '@/context/PresetContext'
 
 export interface BoxProps {
   placedBox: PlacedBox
@@ -16,6 +17,8 @@ export interface BoxProps {
   showLabel?: boolean
   color?: string
   opacity?: number
+  selectedColor?: string
+  highlightedColor?: string
   onClick?: (id: string) => void
   onHover?: (id: string | null) => void
 }
@@ -26,14 +29,23 @@ export const BoxComponent = memo<BoxProps>(function BoxComponent({
   highlighted = false,
   showLabel = false,
   color,
-  opacity = 1,
+  opacity,
+  selectedColor,
+  highlightedColor,
   onClick,
   onHover,
 }) {
   const meshRef = useRef<THREE.Mesh>(null)
+  const preset = usePreset()
 
   const { box, position, rotation } = placedBox
   const s = UNITS.MM_TO_M
+
+  // Resolver estilos: prop > preset
+  const resolvedColor = color ?? box.color ?? preset.box.color
+  const resolvedOpacity = opacity ?? preset.box.opacity
+  const resolvedSelectedColor = selectedColor ?? preset.selection.selectedColor
+  const resolvedHighlightedColor = highlightedColor ?? preset.selection.highlightedColor
 
   // Dimensiones (teniendo en cuenta rotación en Y)
   let w = box.dimensions.width
@@ -58,8 +70,7 @@ export const BoxComponent = memo<BoxProps>(function BoxComponent({
     [position, scaledDims, s],
   )
 
-  const resolvedColor = color ?? box.color ?? '#e07b39'
-  const finalColor = selected ? '#ff9800' : highlighted ? '#42a5f5' : resolvedColor
+  const borderColor = selected ? resolvedSelectedColor : highlighted ? resolvedHighlightedColor : null
 
   const handleClick = useCallback(
     (e: { stopPropagation: () => void }) => {
@@ -94,19 +105,32 @@ export const BoxComponent = memo<BoxProps>(function BoxComponent({
       >
         <boxGeometry args={scaledDims} />
         <meshStandardMaterial
-          color={finalColor}
-          transparent={opacity < 1}
-          opacity={opacity}
-          roughness={0.6}
-          metalness={0.1}
+          color={resolvedColor}
+          transparent={resolvedOpacity < 1}
+          opacity={resolvedOpacity}
+          roughness={preset.box.roughness}
+          metalness={preset.box.metalness}
         />
       </mesh>
 
-      {/* Borde de selección */}
-      {selected && (
-        <lineSegments position={pos}>
+      {/* Borde de señalización (selección o highlight) — mesh escalado para grosor visible */}
+      {borderColor && (
+        <mesh position={pos}>
+          <boxGeometry args={scaledDims} />
+          <meshBasicMaterial
+            color={borderColor}
+            wireframe
+            wireframeLinewidth={1}
+            transparent
+            opacity={0.9}
+            depthTest={false}
+          />
+        </mesh>
+      )}
+      {borderColor && (
+        <lineSegments position={pos} renderOrder={999}>
           <edgesGeometry args={[new THREE.BoxGeometry(...scaledDims)]} />
-          <lineBasicMaterial color="#ffffff" linewidth={2} />
+          <lineBasicMaterial color={borderColor} />
         </lineSegments>
       )}
 

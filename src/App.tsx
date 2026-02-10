@@ -18,6 +18,7 @@ import {
   usePhysicsValidation,
   useWarehouseValidation,
   TruckType,
+  SCENE_PRESETS,
 } from './lib'
 import type {
   Box,
@@ -75,6 +76,7 @@ function App() {
   const [activeTab, setActiveTab] = useState<DemoTab>('pallet')
   const [cameraPreset, setCameraPreset] = useState<CameraPreset>('perspective')
   const [showLabels, setShowLabels] = useState(false)
+  const [scenePreset, setScenePreset] = useState<string>('industrial')
   const [selectedBoxId, setSelectedBoxId] = useState<string | null>(null)
   const [hoveredBoxId, setHoveredBoxId] = useState<string | null>(null)
   const [strategyName, setStrategyName] = useState('column')
@@ -200,6 +202,7 @@ function App() {
           {activeTab === 'pallet' && (
             <PalletScene
               stackedPallet={stackedPallet}
+              preset={scenePreset}
               selectedBoxId={selectedBoxId}
               highlightedBoxId={hoveredBoxId}
               showLabels={showLabels}
@@ -211,6 +214,7 @@ function App() {
           {activeTab === 'truck' && (
             <TruckScene
               truck={truck}
+              preset={scenePreset}
               selectedBoxId={selectedBoxId}
               highlightedBoxId={hoveredBoxId}
               showLabels={showLabels}
@@ -222,6 +226,7 @@ function App() {
           {activeTab === 'warehouse' && (
             <WarehouseScene
               room={room}
+              preset={scenePreset}
               selectedBoxId={selectedBoxId}
               highlightedBoxId={hoveredBoxId}
               showLabels={showLabels}
@@ -248,6 +253,21 @@ function App() {
                 </button>
               ))}
             </div>
+          </section>
+
+          {/* Scene Preset */}
+          <section className="panel">
+            <h3>Preset visual</h3>
+            <select
+              value={scenePreset}
+              onChange={e => setScenePreset(e.target.value)}
+            >
+              {Object.entries(SCENE_PRESETS).map(([id, p]) => (
+                <option key={id} value={id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
           </section>
 
           {/* Strategy */}

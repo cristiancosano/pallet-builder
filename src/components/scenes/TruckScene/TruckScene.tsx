@@ -7,16 +7,24 @@ import { Canvas } from '@react-three/fiber'
 import type { Truck } from '@/core/entities/Truck'
 import type { PlacedPallet } from '@/core/entities/PlacedPallet'
 import type { CameraPreset } from '@/components/controls/CameraControls'
+import type { ScenePreset } from '@/core/presets'
 import { CameraControlsComponent } from '@/components/controls/CameraControls'
 import { TruckEnvironment } from '@/components/environments/TruckEnvironment'
 import { StackedPalletComponent } from '@/components/primitives/StackedPallet'
 import { validatePalletInTruck } from '@/core/validation/bounds'
+import { PresetProvider } from '@/context/PresetContext'
 import { UNITS } from '@/core/constants'
 
 export interface TruckSceneProps {
   truck: Truck
+  /** ID de preset ('unstyled' | 'industrial') o un ScenePreset custom */
+  preset?: string | ScenePreset
   selectedBoxId?: string | null
   highlightedBoxId?: string | null
+  /** Color del borde de selección (override del preset) */
+  selectedColor?: string
+  /** Color del borde de highlight/hover (override del preset) */
+  highlightedColor?: string
   showLabels?: boolean
   cameraPreset?: CameraPreset
   onBoxClick?: (id: string) => void
@@ -27,8 +35,11 @@ export interface TruckSceneProps {
 
 export const TruckScene = memo<TruckSceneProps>(function TruckScene({
   truck,
+  preset,
   selectedBoxId,
   highlightedBoxId,
+  selectedColor,
+  highlightedColor,
   showLabels = false,
   cameraPreset = 'perspective',
   onBoxClick,
@@ -68,6 +79,7 @@ export const TruckScene = memo<TruckSceneProps>(function TruckScene({
       camera={{ position: [w * 2, w * 1.5, d * 0.6], fov: 50, near: 0.01, far: 100 }}
       style={{ width: '100%', height: '100%', ...style }}
     >
+      <PresetProvider preset={preset}>
       <CameraControlsComponent
         preset={cameraPreset}
         target={target}
@@ -84,6 +96,8 @@ export const TruckScene = memo<TruckSceneProps>(function TruckScene({
             palletId={pp.id}
             selectedBoxId={selectedBoxId}
             highlightedBoxId={highlightedBoxId}
+            selectedColor={selectedColor}
+            highlightedColor={highlightedColor}
             showLabels={showLabels}
             onBoxClick={onBoxClick}
             onBoxHover={onBoxHover}
@@ -91,6 +105,7 @@ export const TruckScene = memo<TruckSceneProps>(function TruckScene({
         ))}
         {children}
       </TruckEnvironment>
+      </PresetProvider>
     </Canvas>
   )
 })

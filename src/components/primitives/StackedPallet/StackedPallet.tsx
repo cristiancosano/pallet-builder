@@ -22,6 +22,10 @@ export interface StackedPalletComponentProps {
   palletId?: string
   selectedBoxId?: string | null
   highlightedBoxId?: string | null
+  /** Color del borde de selección (por defecto: rojo #ff0000) */
+  selectedColor?: string
+  /** Color del borde de highlight/hover (por defecto: azul #42a5f5) */
+  highlightedColor?: string
   showLabels?: boolean
   onBoxClick?: (id: string) => void
   onBoxHover?: (id: string | null) => void
@@ -35,6 +39,8 @@ export const StackedPalletComponent = memo<StackedPalletComponentProps>(
     palletId,
     selectedBoxId,
     highlightedBoxId,
+    selectedColor,
+    highlightedColor,
     showLabels = false,
     onBoxClick,
     onBoxHover,
@@ -98,6 +104,8 @@ export const StackedPalletComponent = memo<StackedPalletComponentProps>(
                   }}
                   selected={matchesId(pb.id, selectedBoxId)}
                   highlighted={matchesId(pb.id, highlightedBoxId)}
+                  selectedColor={selectedColor}
+                  highlightedColor={highlightedColor}
                   showLabel={showLabels}
                   onClick={onBoxClick}
                   onHover={onBoxHover}

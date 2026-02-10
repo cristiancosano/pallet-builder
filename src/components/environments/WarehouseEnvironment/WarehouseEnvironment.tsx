@@ -7,6 +7,7 @@ import { memo, useMemo, type ReactNode } from 'react'
 import * as THREE from 'three'
 import { UNITS } from '@/core/constants'
 import type { Room } from '@/core/entities/Room'
+import { usePreset } from '@/context/PresetContext'
 
 export interface WarehouseEnvironmentProps {
   room: Room
@@ -19,11 +20,15 @@ export interface WarehouseEnvironmentProps {
 export const WarehouseEnvironment = memo<WarehouseEnvironmentProps>(
   function WarehouseEnvironment({
     room,
-    floorColor = '#8a8a8a',
-    wallColor = '#d0d0d0',
-    showGrid = true,
+    floorColor,
+    wallColor,
+    showGrid,
     children,
   }) {
+    const preset = usePreset()
+    const resolvedFloorColor = floorColor ?? preset.warehouse.floorColor
+    const resolvedWallColor = wallColor ?? preset.warehouse.wallColor
+    const resolvedShowGrid = showGrid ?? preset.warehouse.showGrid
     const s = UNITS.MM_TO_M
     const ceilingH = room.ceilingHeight * s
 
@@ -89,33 +94,33 @@ export const WarehouseEnvironment = memo<WarehouseEnvironmentProps>(
         {/* Suelo */}
         <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
           <shapeGeometry args={[shape]} />
-          <meshStandardMaterial color={floorColor} side={THREE.DoubleSide} roughness={0.8} />
+          <meshStandardMaterial color={resolvedFloorColor} side={THREE.DoubleSide} roughness={preset.warehouse.floorRoughness} />
         </mesh>
 
         {/* Paredes */}
         <mesh geometry={wallGeometry} receiveShadow>
           <meshStandardMaterial
-            color={wallColor}
+            color={resolvedWallColor}
             side={THREE.DoubleSide}
             roughness={0.7}
             transparent
-            opacity={0.4}
+            opacity={preset.warehouse.wallOpacity}
           />
         </mesh>
 
         {/* Grid */}
-        {showGrid && (
+        {resolvedShowGrid && (
           <gridHelper
-            args={[Math.max(sizeX, sizeZ), Math.round(Math.max(sizeX, sizeZ)), '#666666', '#999999']}
+            args={[Math.max(sizeX, sizeZ), Math.round(Math.max(sizeX, sizeZ)), preset.warehouse.gridColor, preset.warehouse.gridSecondaryColor]}
             position={[centerX, 0.001, centerZ]}
           />
         )}
 
         {/* Iluminación almacén */}
-        <ambientLight intensity={0.4} />
+        <ambientLight intensity={preset.warehouse.ambientIntensity} />
         <directionalLight
           position={[centerX + sizeX, ceilingH * 0.8, centerZ + sizeZ]}
-          intensity={0.8}
+          intensity={preset.warehouse.directionalIntensity}
           castShadow
           shadow-mapSize-width={1024}
           shadow-mapSize-height={1024}

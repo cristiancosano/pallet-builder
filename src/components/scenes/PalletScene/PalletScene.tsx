@@ -7,14 +7,22 @@ import { memo, useMemo, type ReactNode } from 'react'
 import { Canvas } from '@react-three/fiber'
 import type { StackedPallet } from '@/core/entities/StackedPallet'
 import type { CameraPreset } from '@/components/controls/CameraControls'
+import type { ScenePreset } from '@/core/presets'
 import { CameraControlsComponent } from '@/components/controls/CameraControls'
 import { StackedPalletComponent } from '@/components/primitives/StackedPallet'
+import { PresetProvider } from '@/context/PresetContext'
 import { UNITS } from '@/core/constants'
 
 export interface PalletSceneProps {
   stackedPallet: StackedPallet
+  /** ID de preset ('unstyled' | 'industrial') o un ScenePreset custom */
+  preset?: string | ScenePreset
   selectedBoxId?: string | null
   highlightedBoxId?: string | null
+  /** Color del borde de selección (override del preset) */
+  selectedColor?: string
+  /** Color del borde de highlight/hover (override del preset) */
+  highlightedColor?: string
   showLabels?: boolean
   cameraPreset?: CameraPreset
   showGrid?: boolean
@@ -26,8 +34,11 @@ export interface PalletSceneProps {
 
 export const PalletScene = memo<PalletSceneProps>(function PalletScene({
   stackedPallet,
+  preset,
   selectedBoxId,
   highlightedBoxId,
+  selectedColor,
+  highlightedColor,
   showLabels = false,
   cameraPreset = 'perspective',
   showGrid = true,
@@ -55,6 +66,7 @@ export const PalletScene = memo<PalletSceneProps>(function PalletScene({
       camera={{ position: [3, 2.5, 3], fov: 50, near: 0.01, far: 100 }}
       style={{ width: '100%', height: '100%', ...style }}
     >
+      <PresetProvider preset={preset}>
       {/* Iluminación */}
       <ambientLight intensity={0.4} />
       <directionalLight
@@ -91,6 +103,8 @@ export const PalletScene = memo<PalletSceneProps>(function PalletScene({
         stackedPallet={stackedPallet}
         selectedBoxId={selectedBoxId}
         highlightedBoxId={highlightedBoxId}
+        selectedColor={selectedColor}
+        highlightedColor={highlightedColor}
         showLabels={showLabels}
         onBoxClick={onBoxClick}
         onBoxHover={onBoxHover}
@@ -98,6 +112,7 @@ export const PalletScene = memo<PalletSceneProps>(function PalletScene({
 
       {/* Custom children */}
       {children}
+      </PresetProvider>
     </Canvas>
   )
 })

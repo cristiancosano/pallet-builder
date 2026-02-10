@@ -7,16 +7,24 @@ import { Canvas } from '@react-three/fiber'
 import type { Room } from '@/core/entities/Room'
 import type { PlacedPallet } from '@/core/entities/PlacedPallet'
 import type { CameraPreset } from '@/components/controls/CameraControls'
+import type { ScenePreset } from '@/core/presets'
 import { CameraControlsComponent } from '@/components/controls/CameraControls'
 import { WarehouseEnvironment } from '@/components/environments/WarehouseEnvironment'
 import { StackedPalletComponent } from '@/components/primitives/StackedPallet'
 import { validatePalletInRoom } from '@/core/validation/polygon'
+import { PresetProvider } from '@/context/PresetContext'
 import { UNITS } from '@/core/constants'
 
 export interface WarehouseSceneProps {
   room: Room
+  /** ID de preset ('unstyled' | 'industrial') o un ScenePreset custom */
+  preset?: string | ScenePreset
   selectedBoxId?: string | null
   highlightedBoxId?: string | null
+  /** Color del borde de selección (override del preset) */
+  selectedColor?: string
+  /** Color del borde de highlight/hover (override del preset) */
+  highlightedColor?: string
   showLabels?: boolean
   cameraPreset?: CameraPreset
   onBoxClick?: (id: string) => void
@@ -27,8 +35,11 @@ export interface WarehouseSceneProps {
 
 export const WarehouseScene = memo<WarehouseSceneProps>(function WarehouseScene({
   room,
+  preset,
   selectedBoxId,
   highlightedBoxId,
+  selectedColor,
+  highlightedColor,
   showLabels = false,
   cameraPreset = 'perspective',
   onBoxClick,
@@ -70,6 +81,7 @@ export const WarehouseScene = memo<WarehouseSceneProps>(function WarehouseScene(
       camera={{ position: [cx + 5, 4, cz + 5], fov: 50, near: 0.01, far: 100 }}
       style={{ width: '100%', height: '100%', ...style }}
     >
+      <PresetProvider preset={preset}>
       <CameraControlsComponent
         preset={cameraPreset}
         target={target}
@@ -86,6 +98,8 @@ export const WarehouseScene = memo<WarehouseSceneProps>(function WarehouseScene(
             palletId={pp.id}
             selectedBoxId={selectedBoxId}
             highlightedBoxId={highlightedBoxId}
+            selectedColor={selectedColor}
+            highlightedColor={highlightedColor}
             showLabels={showLabels}
             onBoxClick={onBoxClick}
             onBoxHover={onBoxHover}
@@ -93,6 +107,7 @@ export const WarehouseScene = memo<WarehouseSceneProps>(function WarehouseScene(
         ))}
         {children}
       </WarehouseEnvironment>
+      </PresetProvider>
     </Canvas>
   )
 })

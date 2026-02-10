@@ -7,18 +7,24 @@ import * as THREE from 'three'
 import type { Pallet } from '@/core/entities/Pallet'
 import type { Position3D } from '@/core/types'
 import { UNITS } from '@/core/constants'
+import { usePreset } from '@/context/PresetContext'
 
 export interface PalletComponentProps {
   pallet: Pallet
   position?: Position3D
   color?: string
+  edgeColor?: string
 }
 
 export const PalletComponent = memo<PalletComponentProps>(function PalletComponent({
   pallet,
   position = { x: 0, y: 0, z: 0 },
-  color = '#c4a26e',
+  color,
+  edgeColor,
 }) {
+  const preset = usePreset()
+  const resolvedColor = color ?? preset.pallet.color
+  const resolvedEdgeColor = edgeColor ?? preset.pallet.edgeColor
   const s = UNITS.MM_TO_M
   const dims = pallet.dimensions
 
@@ -42,13 +48,13 @@ export const PalletComponent = memo<PalletComponentProps>(function PalletCompone
       {/* Tabla superior */}
       <mesh position={pos} castShadow receiveShadow>
         <boxGeometry args={scaledDims} />
-        <meshStandardMaterial color={color} roughness={0.85} metalness={0.05} />
+        <meshStandardMaterial color={resolvedColor} roughness={preset.pallet.roughness} metalness={preset.pallet.metalness} />
       </mesh>
 
       {/* Bordes */}
       <lineSegments position={pos}>
         <edgesGeometry args={[new THREE.BoxGeometry(...scaledDims)]} />
-        <lineBasicMaterial color="#8b7355" />
+        <lineBasicMaterial color={resolvedEdgeColor} />
       </lineSegments>
     </group>
   )

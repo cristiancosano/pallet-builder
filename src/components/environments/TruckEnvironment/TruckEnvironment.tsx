@@ -7,6 +7,7 @@ import * as THREE from 'three'
 import type { Truck } from '@/core/entities/Truck'
 import { UNITS } from '@/core/constants'
 import { TruckType } from '@/core/types'
+import { usePreset } from '@/context/PresetContext'
 
 export interface TruckEnvironmentProps {
   truck: Truck
@@ -27,6 +28,7 @@ export const TruckEnvironment = memo<TruckEnvironmentProps>(function TruckEnviro
   showGrid = true,
   children,
 }) {
+  const preset = usePreset()
   const s = UNITS.MM_TO_M
   const d = truck.dimensions
   const w = d.width * s
@@ -43,10 +45,10 @@ export const TruckEnvironment = memo<TruckEnvironmentProps>(function TruckEnviro
         roughness={0.5}
         metalness={0.3}
         transparent
-        opacity={0.35}
+        opacity={preset.truck.wallOpacity}
       />
     ),
-    [colors.wall],
+    [colors.wall, preset.truck.wallOpacity],
   )
 
   return (
