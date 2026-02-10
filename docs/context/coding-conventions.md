@@ -1,395 +1,342 @@
 # Coding Conventions
 
-> **Propósito**: Estándares de código y convenciones para mantener consistencia en el proyecto.
+> **Propósito**: Estándares de código para mantener consistencia en Pallet Builder.
 
-## 🎯 Principios Generales
+## Principios Generales
 
-1. **Claridad sobre Brevedad**: El código debe ser fácil de leer y entender
-2. **DRY (Don't Repeat Yourself)**: Evitar duplicación de código
-3. **SOLID Principles**: Aplicar cuando sea apropiado
-4. **Componentes Pequeños**: Mantener componentes enfocados en una responsabilidad
+1. **Claridad sobre brevedad** — El código debe leerse con facilidad.
+2. **DRY** — Evitar duplicación; extraer a funciones/módulos reutilizables.
+3. **SOLID** — Aplicar donde tenga sentido, especialmente Single Responsibility.
+4. **Componentes pequeños** — Una responsabilidad por componente/función.
+5. **Core puro** — Toda lógica de negocio en `core/`, sin React ni Three.js.
 
-## 📁 Estructura de Archivos
+---
+
+## Estructura de Archivos
 
 ### Nomenclatura
 
-```typescript
-// Componentes: PascalCase
-Button.tsx
-PalletViewer.tsx
-
-// Hooks: camelCase con prefijo 'use'
-usePalletBuilder.ts
-useThreeScene.ts
-
-// Utilities: camelCase
-formatDimensions.ts
-calculateVolume.ts
-
-// Types: PascalCase con sufijo 'Type' o 'Interface'
-PalletType.ts
-UserPreferencesInterface.ts
-
-// Constants: UPPER_CASE (si son primitivos)
-MAX_PALLET_HEIGHT.ts
-// o PascalCase si son objetos complejos
-DefaultConfig.ts
-```
+| Qué | Convención | Ejemplo |
+|-----|-----------|---------|
+| Componente React | PascalCase, carpeta propia | `Box/Box.tsx` |
+| Entidad core | PascalCase | `Pallet.ts`, `StackedPallet.ts` |
+| Hook | camelCase, prefijo `use` | `usePhysicsValidation.ts` |
+| Función de validación | camelCase, prefijo `validate` | `validateNoCollisions.ts` |
+| Tipo / Interface | PascalCase | `Dimensions3D`, `BoxProps` |
+| Enum | PascalCase, valores UPPER_SNAKE | `TruckType.REFRIGERATED` |
+| Constante | UPPER_SNAKE | `TRUCK_PRESETS`, `MAX_FLOORS` |
+| Barrel export | `index.ts` | En cada carpeta |
 
 ### Organización de Imports
 
 ```typescript
 // 1. React y librerías externas
-import { useState, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { OrbitControls } from '@react-three/drei'
 
-// 2. Imports internos - tipos
-import type { PalletConfig, ObjectDimensions } from '@/types'
+// 2. Tipos (import type)
+import type { BoxProps, Dimensions3D } from '@/core/types'
 
-// 3. Imports internos - componentes
-import { Pallet } from '@/components/Pallet'
-import { ControlPanel } from '@/components/ControlPanel'
+// 3. Core (entidades, validación, factories)
+import { validateBounds } from '@/core/validation'
+import { PalletFactory } from '@/core/factories'
 
-// 4. Imports internos - hooks y utils
-import { usePalletBuilder } from '@/hooks/usePalletBuilder'
-import { calculateVolume } from '@/utils/calculations'
+// 4. Componentes internos
+import { Box } from '@/components/primitives/Box'
 
-// 5. Estilos
+// 5. Hooks internos
+import { usePhysicsValidation } from '@/hooks'
+
+// 6. Estilos (solo en demo)
 import './Component.css'
 ```
 
-## 🎨 Componentes React
+---
 
-### Estructura de Componente
+## Componentes React
 
-```typescript
-import { useState, useCallback, memo } from 'react'
-import type { FC } from 'react'
+### Estructura estándar
 
-// 1. Tipos e Interfaces
-interface PalletViewerProps {
-  config: PalletConfig
-  onUpdate?: (config: PalletConfig) => void
-  className?: string
-}
+```tsx
+import { memo, useCallback } from 'react'
 
-// 2. Constantes del componente (si las hay)
-const DEFAULT_CAMERA_POSITION = [5, 5, 5] as const
-
-// 3. Componente
-export const PalletViewer: FC<PalletViewerProps> = memo(({ 
-  config, 
-  onUpdate,
-  className 
-}) => {
-  // 3.1 Hooks de estado
-  const [isLoading, setIsLoading] = useState(false)
-  
-  // 3.2 Custom hooks
-  const { objects, addObject } = usePalletBuilder()
-  
-  // 3.3 Callbacks y handlers
-  const handleAddObject = useCallback(() => {
-    // implementación
-  }, [])
-  
-  // 3.4 Effects
-  useEffect(() => {
-    // implementación
-  }, [config])
-  
-  // 3.5 Render
-  return (
-    <div className={className}>
-      {/* JSX */}
-    </div>
-  )
-})
-
-// 4. Display name (útil para debugging)
-PalletViewer.displayName = 'PalletViewer'
-```
-
-### Componentes 3D (React Three Fiber)
-
-```typescript
-import { useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
-import type { Mesh } from 'three'
-
+// 1. Tipos
 interface BoxProps {
-  position?: [number, number, number]
-  color?: string
+  box: Box
+  position: Position3D
+  selected?: boolean
+  onClick?: (id: string) => void
 }
 
-export function Box({ position = [0, 0, 0], color = 'orange' }: BoxProps) {
-  const meshRef = useRef<Mesh>(null)
-  
-  // Animaciones con useFrame
-  useFrame((state, delta) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.x += delta
-    }
-  })
-  
+// 2. Componente (memo por defecto en primitivas)
+export const BoxComponent = memo<BoxProps>(function BoxComponent({
+  box,
+  position,
+  selected = false,
+  onClick,
+}) {
+  const handleClick = useCallback(() => {
+    onClick?.(box.id)
+  }, [box.id, onClick])
+
   return (
-    <mesh ref={meshRef} position={position}>
-      <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial color={color} />
+    <mesh position={[position.x / 1000, position.y / 1000, position.z / 1000]} onClick={handleClick}>
+      <boxGeometry args={[box.dimensions.width / 1000, box.dimensions.height / 1000, box.dimensions.depth / 1000]} />
+      <meshStandardMaterial color={selected ? '#ff6600' : box.color} />
     </mesh>
   )
-}
+})
 ```
 
-## 🔧 TypeScript
+### Reglas de componentes
+
+- **Controlados** — Sin `useState` para datos de dominio. Todo por props.
+- **Callbacks** — Toda acción sale por callback (`onClick`, `onHover`, `onMove`).
+- **Memo** — Primitivas 3D siempre con `React.memo`.
+- **Naming** — Props tipo se llama `ComponentNameProps` (e.g., `BoxProps`).
+- **Display name** — Usar named function en `memo()` para DevTools.
+
+### Componentes 3D (R3F)
+
+```tsx
+// Conversión mm → metros en el componente
+const posMeters = useMemo(
+  () => [pos.x / 1000, pos.y / 1000, pos.z / 1000] as const,
+  [pos]
+)
+
+// useMemo en geometrías y materiales
+const geometry = useMemo(
+  () => new THREE.BoxGeometry(w / 1000, h / 1000, d / 1000),
+  [w, h, d]
+)
+```
+
+---
+
+## TypeScript
 
 ### Tipos vs Interfaces
 
 ```typescript
-// Usar 'type' para:
-// - Uniones
-type Status = 'idle' | 'loading' | 'success' | 'error'
-
-// - Intersecciones
-type UserWithPermissions = User & Permissions
-
-// - Tipos utilitarios
-type PartialConfig = Partial<Config>
-
-// Usar 'interface' para:
-// - Definiciones de objetos que pueden extenderse
-interface PalletConfig {
-  width: number
-  height: number
-  depth: number
+// interface → para shapes de objetos (extensible)
+interface Pallet {
+  id: string
+  dimensions: Dimensions3D
+  maxLoad: number
 }
 
-// - Props de componentes
-interface ButtonProps {
-  label: string
-  onClick: () => void
-}
+// type → para uniones, intersecciones, utilitarios
+type DiscreteRotation = 0 | 90 | 180 | 270
+type PackingResultStatus = 'success' | 'partial' | 'failed'
 ```
 
-### Tipos Genéricos
+### Reglas TS
+
+- **Strict mode** siempre habilitado.
+- **No `any`** — Usar `unknown` + narrowing o tipos genéricos.
+- **`readonly`** en interfaces de entidades cuando sea posible.
+- **Tipos explícitos** en firmas de funciones públicas (exports).
+- **Inline types** permitidos para props internas simples.
+
+---
+
+## Core — Funciones Puras
 
 ```typescript
-// Funciones genéricas bien tipadas
-function createArray<T>(length: number, value: T): T[] {
-  return Array(length).fill(value)
-}
-
-// Componentes genéricos
-interface ListProps<T> {
-  items: T[]
-  renderItem: (item: T) => React.ReactNode
-}
-
-function List<T>({ items, renderItem }: ListProps<T>) {
-  return <ul>{items.map(renderItem)}</ul>
-}
-```
-
-## 🎣 Custom Hooks
-
-```typescript
-// Nomenclatura: siempre comenzar con 'use'
-// Retornar objeto con propiedades nombradas (no array)
-function usePalletBuilder(initialConfig?: PalletConfig) {
-  const [config, setConfig] = useState(initialConfig)
-  const [objects, setObjects] = useState<Object3D[]>([])
-  
-  const addObject = useCallback((object: Object3D) => {
-    setObjects(prev => [...prev, object])
-  }, [])
-  
-  const removeObject = useCallback((id: string) => {
-    setObjects(prev => prev.filter(obj => obj.uuid !== id))
-  }, [])
-  
-  const reset = useCallback(() => {
-    setObjects([])
-    setConfig(initialConfig)
-  }, [initialConfig])
-  
-  return {
-    config,
-    objects,
-    addObject,
-    removeObject,
-    reset
+// ✅ Función pura de validación
+function validateNoBoxCollisions(boxes: PlacedBox[]): ValidationResult {
+  const violations: Violation[] = []
+  for (let i = 0; i < boxes.length; i++) {
+    for (let j = i + 1; j < boxes.length; j++) {
+      if (aabbIntersects(getBoundingBox(boxes[i]), getBoundingBox(boxes[j]))) {
+        violations.push({ code: 'COLLISION', boxAId: boxes[i].box.id, boxBId: boxes[j].box.id })
+      }
+    }
   }
+  return { isValid: violations.length === 0, violations }
+}
+
+// ❌ NO: side effects, mutación, dependencias React
+```
+
+- Input → Output, sin side effects.
+- No importar React ni Three.js en `core/`.
+- Parametrizar todo: no leer globales.
+
+---
+
+## Custom Hooks
+
+```typescript
+// Retornar objeto con propiedades nombradas
+function usePhysicsValidation(boxes: PlacedBox[], pallet: Pallet) {
+  const result = useMemo(
+    () => ({
+      collisions: validateNoBoxCollisions(boxes),
+      bounds: validateBounds(boxes, pallet),
+      gravity: validateGravity(boxes),
+    }),
+    [boxes, pallet]
+  )
+
+  return result
 }
 ```
 
-## 📝 Comentarios y Documentación
+- Siempre prefijo `use`.
+- Retornar **objeto** (no array) para legibilidad.
+- Memoizar cálculos pesados con `useMemo`.
 
-### JSDoc para funciones complejas
+---
+
+## Unidades
+
+| Concepto | Unidad | Notas |
+|----------|--------|-------|
+| Dimensiones | mm | API pública |
+| Posiciones | mm | API pública |
+| Peso | kg | |
+| Rotación | grados (0, 90, 180, 270) | API pública |
+| Interno R3F | metros | Componentes convierten `mm / 1000` |
+| Interno Three.js | radianes | Componentes convierten `deg * π / 180` |
+
+---
+
+## Documentación de Código
+
+### JSDoc en funciones públicas
 
 ```typescript
 /**
- * Calcula el volumen óptimo de empaquetado para un pallet
- * @param dimensions - Dimensiones del pallet (ancho, alto, profundidad)
- * @param objects - Array de objetos a colocar
- * @param options - Opciones de optimización
- * @returns Configuración optimizada con posiciones calculadas
- * @throws {Error} Si las dimensiones son inválidas
+ * Valida que ninguna caja colisione con otra dentro del piso.
+ * Usa detección AABB (Axis-Aligned Bounding Box).
+ *
+ * @param boxes - Cajas posicionadas en el piso
+ * @returns Resultado con lista de violaciones (pares de IDs colisionados)
  */
-function calculateOptimalPacking(
-  dimensions: Dimensions,
-  objects: PackableObject[],
-  options?: OptimizationOptions
-): OptimizedConfig {
-  // implementación
-}
-```
-
-### Comentarios en línea
-
-```typescript
-// ✅ Buenos comentarios: Explican el "por qué"
-// Usamos requestAnimationFrame en lugar de setInterval
-// para sincronizar con el refresh rate del navegador
-useFrame(() => {
+export function validateNoBoxCollisions(boxes: PlacedBox[]): ValidationResult {
   // ...
-})
+}
+```
 
-// ❌ Malos comentarios: Explican el "qué" (ya obvio en el código)
+### Comentarios inline
+
+```typescript
+// ✅ Explica el "por qué"
+// Usamos AABB en vez de OBB porque las rotaciones son discretas (0/90/180/270)
+const collision = aabbIntersects(a, b)
+
+// ❌ Explica el "qué" (ya obvio)
 // Incrementa el contador
-setCount(count + 1)
+count++
 ```
 
-## 🏗️ Patrones de Diseño
+---
 
-### Composición sobre Herencia
+## Patrones de Diseño
 
-```typescript
-// ✅ Bueno: Composición
-function PalletWithControls() {
-  return (
-    <>
-      <Pallet />
-      <Controls />
-    </>
-  )
-}
-
-// ❌ Evitar: Herencia compleja de clases
+### Composition over Inheritance
+```tsx
+<WarehouseScene warehouse={data}>
+  <StackedPallet data={pallet} position={pos} />
+</WarehouseScene>
 ```
 
-### Props Drilling vs Context
-
+### Adapter Pattern (Packing)
 ```typescript
-// Para datos que muchos componentes necesitan: Context
-const PalletContext = createContext<PalletContextValue | null>(null)
-
-export function PalletProvider({ children }: { children: ReactNode }) {
-  const value = usePalletBuilder()
-  return <PalletContext.Provider value={value}>{children}</PalletContext.Provider>
-}
-
-export function usePalletContext() {
-  const context = useContext(PalletContext)
-  if (!context) throw new Error('usePalletContext must be used within PalletProvider')
-  return context
-}
+const strategy: PackingStrategy = registry.get('column')
+const result = strategy.pack(boxes, pallet)
 ```
 
-## ⚡ Rendimiento
-
+### Factory Pattern
 ```typescript
-// Memoización de componentes pesados
-export const ExpensiveComponent = memo(({ data }: Props) => {
-  // render pesado
-}, (prevProps, nextProps) => {
-  // función de comparación personalizada si es necesario
-  return prevProps.data.id === nextProps.data.id
-})
-
-// useMemo para cálculos pesados
-const optimizedLayout = useMemo(() => {
-  return calculateComplexLayout(objects, dimensions)
-}, [objects, dimensions])
-
-// useCallback para funciones pasadas como props
-const handleObjectAdd = useCallback((object: Object3D) => {
-  // handler
-}, [dependencies])
+const pallet = PalletFactory.euro()
+const truck = TruckFactory.fromPreset(TruckType.BOX)
 ```
 
-## 🧪 Testing (Futuro)
+### Controlled Components
+```tsx
+<Box box={data} selected={selectedId === data.id} onClick={handleSelect} />
+```
+
+---
+
+## Rendimiento
+
+- `React.memo` en toda primitiva 3D.
+- `useMemo` en geometrías, materiales, y datos derivados.
+- `useCallback` en handlers pasados como props.
+- No recalcular validaciones en `useFrame` — solo cuando cambian datos.
+- `InstancedMesh` cuando hay muchas cajas idénticas.
+
+---
+
+## Testing
 
 ```typescript
-// Nomenclatura de archivos de test
-Component.test.tsx
-utils.test.ts
+// Nomenclatura
+collision.test.ts       // unit test de core
+usePhysicsValidation.test.ts  // integration test de hook
 
-// Estructura de tests
-describe('PalletBuilder', () => {
-  it('should add object to pallet', () => {
-    // arrange
-    // act
-    // assert
+// Estructura
+describe('validateNoBoxCollisions', () => {
+  it('returns valid when no boxes overlap', () => {
+    const result = validateNoBoxCollisions(nonOverlappingBoxes)
+    expect(result.isValid).toBe(true)
   })
-  
-  it('should throw error when dimensions are invalid', () => {
-    // test
+
+  it('detects collision between overlapping boxes', () => {
+    const result = validateNoBoxCollisions(overlappingBoxes)
+    expect(result.isValid).toBe(false)
+    expect(result.violations).toHaveLength(1)
   })
 })
 ```
 
-## 🚫 Anti-patrones a Evitar
+- Arrange → Act → Assert.
+- Tests del core: sin mocks de React/Three.js.
+- Tests de hooks: `@testing-library/react`.
+- Tests de componentes 3D: smoke tests (montan sin errores).
+
+---
+
+## Límites de Código
+
+| Métrica | Límite |
+|---------|--------|
+| Componente | ≤ 200 líneas |
+| Función | ≤ 50 líneas |
+| Línea | ≤ 100 caracteres |
+| Parámetros de función | ≤ 4 (usar objeto para más) |
+| Archivos en carpeta | Si > 10, considerar subdividir |
+
+---
+
+## Anti-patrones
 
 ```typescript
-// ❌ Any types
+// ❌ any
 const data: any = fetchData()
+// ✅
+const data: PalletData = fetchData()
 
-// ✅ Tipos apropiados
-const data: UserData = fetchData()
+// ❌ Estado interno en componentes de la librería
+function Box() { const [hovered, setHovered] = useState(false) }
+// ✅ Controlado
+function Box({ hovered, onHover }: BoxProps) { ... }
 
-// ❌ Mutación directa de estado
-objects.push(newObject)
+// ❌ Lógica de negocio en componente
+function Pallet() { if (totalWeight > maxLoad) ... }
+// ✅ Lógica en core
+const result = validateWeight(boxes, pallet)
 
+// ❌ Mutación directa
+pallet.floors.push(floor)
 // ✅ Inmutabilidad
-setObjects([...objects, newObject])
+const updated = { ...pallet, floors: [...pallet.floors, floor] }
 
-// ❌ Efectos sin dependencias correctas
-useEffect(() => {
-  doSomething(prop)
-}, []) // falta 'prop'
-
-// ✅ Dependencias completas
-useEffect(() => {
-  doSomething(prop)
-}, [prop])
-```
-
-## 📏 Límites de Código
-
-- **Componente**: Máximo 250 líneas (considerar dividir si es más grande)
-- **Función**: Máximo 50 líneas
-- **Línea de código**: Máximo 100 caracteres
-- **Parámetros de función**: Máximo 4 (usar objetos para más)
-
-## 🎨 Estilos
-
-```typescript
-// Preferir CSS Modules o Styled Components sobre inline styles
-// para estilos complejos
-
-// ✅ CSS Modules
-import styles from './Component.module.css'
-<div className={styles.container} />
-
-// ✅ Inline styles para valores dinámicos simples
-<mesh position={[x, y, z]} />
-
-// ❌ Evitar inline styles complejos
-<div style={{ 
-  width: '100px', 
-  height: '100px', 
-  backgroundColor: 'red',
-  // ... muchas más propiedades
-}} />
+// ❌ Import de React en core/
+import { useState } from 'react' // en core/validation/bounds.ts
+// ✅ Core es TypeScript puro
 ```

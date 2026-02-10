@@ -1,32 +1,21 @@
-# Documentación de API
+# API Reference
 
-Esta carpeta contiene la documentación de referencia para componentes, hooks, utilidades y tipos utilizados en el proyecto.
+Referencia de la API pública de Pallet Builder. Se generará conforme avance la implementación.
 
-## 📚 Estructura
+## Estructura prevista
 
-### [components/](./components)
-Documentación de todos los componentes React del proyecto:
-- Componentes 3D (Three.js/R3F)
-- Componentes UI
-- Componentes de layout
+| Sección | Contenido |
+|---------|----------|
+| Componentes primitivos | `<Box />`, `<Pallet />`, `<Separator />`, `<StackedPallet />`, `<Label />` |
+| Environments | `<WarehouseEnvironment />`, `<TruckEnvironment />` |
+| Scenes | `<PalletScene />`, `<TruckScene />`, `<WarehouseScene />` |
+| Hooks | `usePhysicsValidation`, `usePalletMetrics`, `usePackingStrategy` |
+| Core/Validation | Funciones puras: `validateNoBoxCollisions`, `validateBounds`, `validateWeight`, etc. |
+| Core/Packing | `PackingStrategy` (interfaz), `ColumnStrategy`, `BinPacking3DStrategy`, `PackingRegistry` |
+| Core/Factories | `PalletFactory`, `TruckFactory` |
+| Tipos | `Box`, `Pallet`, `Warehouse`, `Room`, `Truck`, `StackedPallet`, `Dimensions3D`, etc. |
 
-### [hooks/](./hooks)
-Documentación de custom hooks:
-- Hooks de estado
-- Hooks de R3F
-- Hooks de utilidad
-
-### [utils/](./utils)
-Funciones utilitarias y helpers:
-- Cálculos matemáticos
-- Formateo y validación
-- Helpers diversos
-
-### [types/](./types)
-Definiciones de tipos TypeScript:
-- Interfaces
-- Types
-- Enums
+Ver [entities.md](../domain/entities.md) para las interfaces TypeScript completas.
 
 ## 📝 Formato de Documentación
 

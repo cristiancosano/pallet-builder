@@ -1,155 +1,156 @@
-# Tech Stack Details
+# Tech Stack
 
-> **Propósito**: Información detallada sobre las tecnologías utilizadas en el proyecto y sus versiones.
+> **Propósito**: Tecnologías, versiones y convenciones técnicas de Pallet Builder.
 
-## 📚 Dependencias Principales
+## Dependencias Principales
 
-### React Three Fiber Ecosystem
+### Core 3D
 
-#### @react-three/fiber
-- **Versión**: Latest
-- **Propósito**: React renderer para Three.js que permite usar Three.js declarativamente
-- **Documentación**: https://docs.pmnd.rs/react-three-fiber
+| Paquete | Versión | Propósito |
+|---------|---------|-----------|
+| `three` | Latest compat. R3F | Motor 3D WebGL |
+| `@react-three/fiber` | Latest | React renderer para Three.js — API declarativa |
+| `@react-three/drei` | Latest | Helpers R3F: OrbitControls, Environment, Grid, etc. |
 
-**Convenciones de uso**:
+### Framework
+
+| Paquete | Versión | Propósito |
+|---------|---------|-----------|
+| `react` | 18.x | UI framework |
+| `react-dom` | 18.x | DOM renderer |
+| `typescript` | 5.x | Lenguaje — strict mode habilitado |
+
+### Build & Dev
+
+| Paquete | Versión | Propósito |
+|---------|---------|-----------|
+| `vite` | Latest | Build tool — modo library para producción |
+| `vitest` | Latest | Test runner compatible con Vite |
+| `eslint` | Latest | Linter — flat config |
+| `pnpm` | Latest | Package manager |
+
+---
+
+## Vite — Modo Library
+
+Pallet Builder se compila como **librería** con Vite:
+
 ```typescript
-// Usar Canvas como contenedor principal
+// vite.config.ts (concepto)
+export default defineConfig({
+  build: {
+    lib: {
+      entry: resolve(__dirname, 'src/lib.ts'),
+      name: 'PalletBuilder',
+      formats: ['es', 'cjs'],
+    },
+    rollupOptions: {
+      external: ['react', 'react-dom', 'three', '@react-three/fiber', '@react-three/drei'],
+    },
+  },
+})
+```
+
+- **Entry point**: `src/lib.ts`
+- **Formats**: ESM + CJS
+- **Externals**: React, Three.js y R3F son peer dependencies — no se bundlean.
+
+---
+
+## TypeScript — Configuración
+
+- **Strict mode**: habilitado (`strict: true`)
+- **Target**: ES2020+
+- **Module**: ESNext
+- **Path aliases**: `@/` → `src/`
+
+Convenciones TS:
+- `interface` para shapes de objetos y props de componentes.
+- `type` para uniones, intersecciones y tipos utilitarios.
+- Evitar `any` — usar `unknown` y narrowing.
+- Tipos explícitos en firmas de funciones públicas.
+
+---
+
+## React Three Fiber — Convenciones
+
+```tsx
+// Canvas como raíz de toda escena 3D
 import { Canvas } from '@react-three/fiber'
 
-// Componentes 3D dentro de Canvas
-<Canvas>
-  <mesh>
-    <boxGeometry />
-    <meshStandardMaterial />
-  </mesh>
+<Canvas camera={{ position: [5, 5, 5], fov: 50 }}>
+  <ambientLight intensity={0.5} />
+  <directionalLight position={[10, 10, 5]} />
+  {children}
 </Canvas>
 ```
 
-#### @react-three/drei
-- **Versión**: Latest
-- **Propósito**: Colección de helpers útiles para react-three-fiber
-- **Documentación**: https://github.com/pmndrs/drei
+- Los componentes R3F solo se usan **dentro** de `<Canvas>`.
+- Usar `useFrame` con moderación — no hacer cálculos pesados en cada frame.
+- Geometrías y materiales se memoizan con `useMemo`.
+- Para muchas instancias del mismo mesh: `<InstancedMesh>`.
 
-**Componentes útiles**:
-- `OrbitControls`: Controles de cámara
-- `Sky`: Cielo procedural
-- `Environment`: Entorno HDR
-- `Grid`: Rejilla de referencia
-- `GizmoHelper`: Gizmo de orientación
+### Drei — Componentes útiles
 
-#### Three.js
-- **Versión**: Latest compatible con R3F
-- **Propósito**: Librería 3D WebGL
-- **Documentación**: https://threejs.org/docs/
+| Componente | Uso en Pallet Builder |
+|-----------|----------------------|
+| `OrbitControls` | Controles de cámara (orbit + pan + zoom) |
+| `Environment` | HDRI para iluminación realista (`warehouse.hdr`) |
+| `Grid` | Rejilla de referencia en decorados |
+| `Html` | Overlays HTML dentro de la escena 3D (labels) |
+| `Center` | Centrar geometrías automáticamente |
 
-## 🎨 Framework & Build Tools
+---
 
-### React
-- **Versión**: 18.x
-- **Características utilizadas**:
-  - Hooks (useState, useEffect, useRef, etc.)
-  - Suspense para carga asíncrona
-  - Concurrent features
+## Gestión de Estado
 
-### TypeScript
-- **Versión**: 5.x
-- **Configuración**: Strict mode habilitado
-- **Convenciones**:
-  - Tipos explícitos para props
-  - Interfaces para objetos complejos
-  - Tipos utilitarios de React (@types/react)
+La librería **NO incluye state management**. Todos los componentes son controlados (props in, callbacks out). El consumidor elige su propia solución:
 
-### Vite
-- **Versión**: Latest
-- **Propósito**: Build tool ultra-rápido
-- **Características**:
-  - HMR (Hot Module Replacement)
-  - TypeScript out-of-the-box
-  - Optimización de producción
+- Zustand, Jotai, Redux, React Context — cualquiera funciona.
+- La demo (`App.tsx`) puede usar un store local para mostrar funcionalidad.
 
-## 🔧 Herramientas de Desarrollo
+---
 
-### ESLint
-- **Configuración**: Basada en estándares de TypeScript y React
-- **Plugins**: TypeScript, React Hooks
+## Testing
 
-### pnpm
-- **Versión**: Latest
-- **Propósito**: Package manager eficiente
-- **Ventajas**: 
-  - Espacio en disco optimizado
-  - Instalación más rápida
-  - Gestión estricta de dependencias
+| Herramienta | Capa |
+|-------------|------|
+| `vitest` | Core (unit tests — funciones puras) |
+| `@testing-library/react` | Hooks (integration) |
+| `@react-three/test-renderer` | Componentes 3D (smoke tests) |
 
-## 📦 Gestión de Estado (Futuro)
+Estrategia: el core tiene > 90% cobertura. Los componentes 3D se testean como smoke tests (montan sin errores).
 
-### Opciones a considerar:
-1. **Zustand** (Recomendado para estado global simple)
-2. **Jotai** (Atoms para estado atómico)
-3. **React Context + Hooks** (Para estado simple)
+---
 
-## 🎯 Librerías de Utilidad (Futuro)
+## Rendimiento — Guía rápida
 
-### Consideradas para incorporar:
-- **@react-three/postprocessing**: Efectos de post-procesamiento
-- **@react-three/rapier**: Física 3D
-- **leva**: GUI de controles para desarrollo
-- **zustand**: State management minimalista
+1. **`React.memo`** en primitivas 3D para evitar re-renders.
+2. **`useMemo`** para geometrías, materiales y datos calculados.
+3. **`InstancedMesh`** cuando hay > 50 cajas iguales.
+4. **Frustum culling** automático de Three.js.
+5. **Lazy loading** con `<Suspense>` para modelos GLTF.
+6. **Validaciones bajo demanda** — solo cuando cambian los datos, no en cada frame.
 
-## 🔒 Consideraciones de Rendimiento
+---
 
-### Three.js / R3F
-- Usar `useMemo` y `useCallback` para evitar re-renders innecesarios
-- Implementar `InstancedMesh` para muchos objetos similares
-- Considerar `Level of Detail (LOD)` para escenas complejas
-- Usar `useFrame` con precaución, evitar operaciones pesadas
+## Compatibilidad
 
-### React
-- Code splitting con lazy loading
-- Memoización de componentes pesados
-- Virtualización de listas largas (si aplica)
-
-## 🌐 Compatibilidad
-
-### Navegadores Objetivo
-- Chrome/Edge (últimas 2 versiones)
+### Navegadores objetivo
+- Chrome / Edge (últimas 2 versiones)
 - Firefox (últimas 2 versiones)
 - Safari (últimas 2 versiones)
 
-### Requisitos de WebGL
-- WebGL 2.0 preferido
-- Fallback a WebGL 1.0 si es necesario
+### Requisitos
+- WebGL 2.0 (obligatorio para Three.js moderno)
+- ES2020+ en el runtime del consumidor
 
-## 📝 Notas de Implementación
+---
 
-### Estructura de Componentes 3D
-```typescript
-// Patrón recomendado para componentes 3D
-interface PalletProps {
-  dimensions: { width: number; height: number; depth: number }
-  position?: [number, number, number]
-}
+## Referencias
 
-export function Pallet({ dimensions, position = [0, 0, 0] }: PalletProps) {
-  return (
-    <mesh position={position}>
-      <boxGeometry args={[dimensions.width, dimensions.height, dimensions.depth]} />
-      <meshStandardMaterial color="brown" />
-    </mesh>
-  )
-}
-```
-
-### Hooks Personalizados
-```typescript
-// Ejemplo de hook para gestión de objetos 3D
-function usePalletBuilder() {
-  const [objects, setObjects] = useState<Object3D[]>([])
-  
-  const addObject = useCallback((object: Object3D) => {
-    setObjects(prev => [...prev, object])
-  }, [])
-  
-  return { objects, addObject }
-}
-```
+- [R3F Docs](https://docs.pmnd.rs/react-three-fiber)
+- [Drei Docs](https://github.com/pmndrs/drei)
+- [Three.js Docs](https://threejs.org/docs/)
+- [Vite Library Mode](https://vitejs.dev/guide/build.html#library-mode)
+- [Vitest](https://vitest.dev/)

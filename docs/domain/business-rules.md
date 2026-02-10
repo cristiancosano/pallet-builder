@@ -2,579 +2,265 @@
 
 Las reglas de negocio definen las restricciones y validaciones que debe cumplir el sistema. Son invariantes del dominio que SIEMPRE deben respetarse.
 
-## 🎯 Categorías de Reglas
+> **Nota**: Todas las reglas se implementan en el core layer (TypeScript puro) y se exponen al desarrollador consumidor mediante hooks y funciones de validación.
 
-### 1. Restricciones Físicas
-### 2. Restricciones de Peso
-### 3. Restricciones de Apilamiento
-### 4. Restricciones de Compatibilidad
-### 5. Restricciones de Estabilidad
+## Categorías de Reglas
+
+| Cat. | Nombre | Aplica a |
+|------|--------|----------|
+| 1 | Restricciones Físicas | Todos los contenedores |
+| 2 | Restricciones de Peso | Todos los contenedores |
+| 3 | Restricciones de Apilamiento de Cajas | Palet |
+| 4 | Restricciones de Apilamiento de Palets | StackedPallet |
+| 5 | Restricciones de Estancia / Camión | Room, Truck |
+| 6 | Restricciones de Estabilidad | Palet, StackedPallet |
 
 ---
 
-## 1️⃣ Restricciones Físicas
+## 1. Restricciones Físicas
 
-### BR-001: Límites del Pallet
+### BR-001: Límites de Caja en Palet
 
-**Regla**: Ningún objeto puede extenderse fuera de los límites físicos del pallet.
+**Regla**: Ninguna caja puede extenderse fuera de los límites del palet.
+**Razón**: Objetos que sobresalen caen durante transporte.
 
-**Razón**: Los objetos que sobresalen pueden caerse durante el transporte.
-
-**Validación**:
 ```typescript
-function validatePhysicalBounds(
-  pallet: Pallet,
-  object: PlacedObject
-): ValidationResult {
-  const palletBounds = pallet.dimensions
-  const objectBounds = object.bounds
-  
-  const violations: string[] = []
-  
-  // Verificar eje X
-  if (objectBounds.minX < -palletBounds.width / 2 ||
-      objectBounds.maxX > palletBounds.width / 2) {
-    violations.push('Object extends beyond pallet width (X axis)')
-  }
-  
-  // Verificar eje Z
-  if (objectBounds.minZ < -palletBounds.depth / 2 ||
-      objectBounds.maxZ > palletBounds.depth / 2) {
-    violations.push('Object extends beyond pallet depth (Z axis)')
-  }
-  
-  // Verificar eje Y (altura)
-  if (objectBounds.minY < 0) {
-    violations.push('Object penetrates pallet base')
-  }
-  
-  return {
-    isValid: violations.length === 0,
-    violations
-  }
-}
+function validateBoxInPalletBounds(pallet: Pallet, box: PlacedBox): ValidationResult
+// box.bounds debe estar contenido en el volumen del palet (ancho × prof × maxStackHeight)
 ```
 
-### BR-002: Sin Colisiones
+### BR-002: Sin Colisiones entre Cajas
 
-**Regla**: Dos objetos no pueden ocupar el mismo espacio.
-
+**Regla**: Dos cajas no pueden ocupar el mismo espacio dentro de un palet.
 **Razón**: Imposibilidad física.
+**Método**: Detección AABB (Axis-Aligned Bounding Box) con tolerancia de 1 mm.
 
-**Validación**:
 ```typescript
-function validateNoCollisions(
-  placedObjects: PlacedObject[]
-): ValidationResult {
-  const violations: string[] = []
-  
-  for (let i = 0; i < placedObjects.length; i++) {
-    for (let j = i + 1; j < placedObjects.length; j++) {
-      if (checkAABBCollision(
-        placedObjects[i].bounds,
-        placedObjects[j].bounds
-      )) {
-        violations.push(
-          `Collision detected between objects ${placedObjects[i].id} and ${placedObjects[j].id}`
-        )
-      }
-    }
-  }
-  
-  return {
-    isValid: violations.length === 0,
-    violations
-  }
-}
-
-function checkAABBCollision(a: BoundingBox, b: BoundingBox): boolean {
-  return (
-    a.minX <= b.maxX && a.maxX >= b.minX &&
-    a.minY <= b.maxY && a.maxY >= b.minY &&
-    a.minZ <= b.maxZ && a.maxZ >= b.minZ
-  )
-}
+function validateNoBoxCollisions(boxes: PlacedBox[]): ValidationResult
+// Para cada par (i, j): AABB(i) ∩ AABB(j) === ∅
 ```
 
-### BR-003: Altura Máxima
+### BR-003: Sin Colisiones entre Palets
 
-**Regla**: La configuración completa no puede exceder la altura máxima permitida del pallet.
+**Regla**: Dos palets posicionados no pueden ocupar el mismo espacio dentro de un contenedor (estancia o camión).
+**Método**: AABB sobre la huella 3D del `StackedPallet` completo (incluyendo pisos y separadores).
 
-**Razón**: Restricciones de almacenamiento y transporte (ej: altura de puertas, racks).
-
-**Parámetros**:
-- Altura máxima típica: 2000mm
-- Puede variar según normativa
-
-**Validación**:
 ```typescript
-function validateMaxHeight(
-  pallet: Pallet,
-  placedObjects: PlacedObject[]
-): ValidationResult {
-  const maxHeight = pallet.maxHeight
-  const currentHeight = Math.max(
-    ...placedObjects.map(obj => obj.bounds.maxY)
-  )
-  
-  if (currentHeight > maxHeight) {
-    return {
-      isValid: false,
-      violations: [
-        `Configuration height (${currentHeight}mm) exceeds maximum allowed (${maxHeight}mm)`
-      ]
-    }
-  }
-  
-  return { isValid: true, violations: [] }
-}
+function validateNoPalletCollisions(pallets: PlacedPallet[]): ValidationResult
+```
+
+### BR-004: Objetos No Flotan (Gravedad)
+
+**Regla**: Toda caja debe tener soporte debajo: el suelo del palet u otra caja.
+**Criterio**: Al menos 60 % del área base de la caja debe estar sobre una superficie de soporte.
+**Aplicación**: Al colocar, mover o eliminar una caja se recalculan los soportes; las cajas sin soporte caen hasta encontrar superficie.
+
+```typescript
+function validateSupport(box: PlacedBox, allBoxes: PlacedBox[]): ValidationResult
+// box.position.y ≈ 0 (base) OR supportArea(box, objectsBelow) ≥ 60%
 ```
 
 ---
 
-## 2️⃣ Restricciones de Peso
+## 2. Restricciones de Peso
 
-### BR-101: Capacidad Máxima del Pallet
+### BR-101: Peso Máximo de Palet
 
-**Regla**: El peso total de todos los objetos no puede exceder la capacidad de carga del pallet.
+**Regla**: Peso total de cajas en un piso de palet ≤ `pallet.maxWeight`.
+**Factor de seguridad**: Se recomienda no superar el 90 % (warning a partir de 90 %, error a partir de 100 %).
 
-**Razón**: Integridad estructural del pallet y seguridad.
-
-**Parámetros**:
-- EUR Pallet: 1000 kg
-- American Pallet: 1200 kg
-- Factor de seguridad: 0.9 (usar 90% de capacidad máxima)
-
-**Validación**:
 ```typescript
-function validateMaxWeight(
-  pallet: Pallet,
-  objects: PackableObject[]
-): ValidationResult {
-  const totalWeight = objects.reduce(
-    (sum, obj) => sum + obj.weight,
-    0
-  )
-  
-  const maxWeight = pallet.maxWeight
-  const safeMaxWeight = maxWeight * 0.9 // Factor de seguridad
-  
-  const violations: string[] = []
-  
-  if (totalWeight > maxWeight) {
-    violations.push(
-      `Total weight (${totalWeight}kg) exceeds pallet capacity (${maxWeight}kg)`
-    )
-  } else if (totalWeight > safeMaxWeight) {
-    violations.push(
-      `Warning: Total weight (${totalWeight}kg) exceeds recommended safe load (${safeMaxWeight}kg)`
-    )
-  }
-  
-  return {
-    isValid: totalWeight <= maxWeight,
-    violations
-  }
-}
+function validatePalletWeight(floor: PalletFloor): ValidationResult
+// Σ boxes[i].weight ≤ floor.pallet.maxWeight
 ```
 
-### BR-102: Distribución de Peso
+### BR-102: Peso Máximo de Camión
 
-**Regla**: El peso debe estar razonablemente distribuido para evitar desbalance.
+**Regla**: Peso total de todos los palets cargados ≤ `truck.maxWeight`.
 
-**Razón**: Prevenir volcamiento durante manipulación.
-
-**Criterios**:
-- Centro de gravedad dentro del tercio central del pallet
-- Máxima diferencia de peso entre cuadrantes: 30%
-
-**Validación**:
 ```typescript
-function validateWeightDistribution(
-  pallet: Pallet,
-  placedObjects: PlacedObject[]
-): ValidationResult {
-  const centerOfGravity = calculateCenterOfGravity(placedObjects)
-  const palletCenter = pallet.dimensions.center
-  
-  const maxOffset = pallet.dimensions.width / 6 // 1/6 del ancho
-  
-  const offsetX = Math.abs(centerOfGravity.x - palletCenter.x)
-  const offsetZ = Math.abs(centerOfGravity.z - palletCenter.z)
-  
-  const violations: string[] = []
-  
-  if (offsetX > maxOffset) {
-    violations.push(
-      `Center of gravity offset in X axis (${offsetX}mm) exceeds safe limit (${maxOffset}mm)`
-    )
-  }
-  
-  if (offsetZ > maxOffset) {
-    violations.push(
-      `Center of gravity offset in Z axis (${offsetZ}mm) exceeds safe limit (${maxOffset}mm)`
-    )
-  }
-  
-  return {
-    isValid: violations.length === 0,
-    violations
-  }
-}
+function validateTruckWeight(truck: Truck): ValidationResult
+// Σ placedPallets[i].totalWeight ≤ truck.maxWeight
+```
 
-function calculateCenterOfGravity(
-  objects: PlacedObject[]
-): Point3D {
-  let totalWeight = 0
-  let weightedX = 0
-  let weightedY = 0
-  let weightedZ = 0
-  
-  objects.forEach(obj => {
-    const weight = obj.object.weight
-    totalWeight += weight
-    
-    weightedX += obj.position.x * weight
-    weightedY += obj.position.y * weight
-    weightedZ += obj.position.z * weight
-  })
-  
-  return {
-    x: weightedX / totalWeight,
-    y: weightedY / totalWeight,
-    z: weightedZ / totalWeight
-  }
-}
+### BR-103: Peso Sobre Caja Frágil
+
+**Regla**: Si una caja tiene `fragile = true`, el peso soportado encima no puede exceder `fragilityMaxWeight`.
+**Si `fragilityMaxWeight` no está definido y `fragile = true`**: peso encima = 0 kg.
+
+```typescript
+function validateFragileLoad(box: PlacedBox, weightAbove: number): ValidationResult
+```
+
+### BR-104: Distribución de Peso en Palet
+
+**Regla**: El centro de gravedad del palet cargado debe estar dentro del tercio central de su planta.
+**Severidad**: Warning (no bloquea).
+
+```typescript
+function validateWeightDistribution(pallet: Pallet, boxes: PlacedBox[]): ValidationResult
+// |CoG.x - center.x| ≤ pallet.width / 6
+// |CoG.z - center.z| ≤ pallet.depth / 6
 ```
 
 ---
 
-## 3️⃣ Restricciones de Apilamiento
+## 3. Restricciones de Apilamiento de Cajas
 
-### BR-201: Capacidad de Soporte
+### BR-201: Caja Apilable
 
-**Regla**: Un objeto solo puede apilar sobre sí el peso que su `maxStackWeight` permita.
+**Regla**: Solo las cajas con `stackable = true` pueden tener otras cajas encima.
 
-**Razón**: Prevenir aplastamiento de objetos.
+### BR-202: Capacidad de Soporte de Caja
 
-**Validación**:
+**Regla**: El peso acumulado sobre una caja ≤ `box.fragilityMaxWeight` (si está definido). Si `stackable = true` y `fragilityMaxWeight` no está definido, no hay límite.
+
+### BR-203: Pirámide Invertida
+
+**Regla**: No se permite que una caja más pesada y con mayor área base se apoye sobre una caja más pequeña y ligera.
+**Severidad**: Warning.
+
 ```typescript
-function validateStackingCapacity(
-  bottomObject: PackableObject,
-  objectsAbove: PackableObject[]
-): ValidationResult {
-  if (!bottomObject.stackable) {
-    return {
-      isValid: false,
-      violations: [`Object ${bottomObject.id} is not stackable`]
-    }
-  }
-  
-  const weightAbove = objectsAbove.reduce(
-    (sum, obj) => sum + obj.weight,
-    0
-  )
-  
-  if (bottomObject.maxStackWeight === undefined) {
-    return { isValid: true, violations: [] } // Sin límite
-  }
-  
-  if (weightAbove > bottomObject.maxStackWeight) {
-    return {
-      isValid: false,
-      violations: [
-        `Weight above (${weightAbove}kg) exceeds stacking capacity (${bottomObject.maxStackWeight}kg)`
-      ]
-    }
-  }
-  
-  return { isValid: true, violations: [] }
-}
-```
-
-### BR-202: Soporte Adecuado
-
-**Regla**: Todo objeto debe tener soporte debajo (otro objeto u el pallet mismo).
-
-**Razón**: Gravedad - los objetos no pueden flotar.
-
-**Criterios**:
-- Objeto está en la base (Y ≈ 0), O
-- Al menos 60% del área base tiene soporte debajo
-
-**Validación**:
-```typescript
-function validateSupport(
-  object: PlacedObject,
-  allObjects: PlacedObject[]
-): ValidationResult {
-  // Si está en la base, es válido
-  if (object.position.y <= 0.01) {
-    return { isValid: true, violations: [] }
-  }
-  
-  // Buscar objetos debajo
-  const objectsBelow = allObjects.filter(other => 
-    other.id !== object.id &&
-    other.bounds.maxY <= object.bounds.minY + 0.01 // tolerance
-  )
-  
-  const supportArea = calculateSupportArea(object, objectsBelow)
-  const objectBaseArea = object.object.dimensions.width * 
-                         object.object.dimensions.depth
-  
-  const supportPercentage = (supportArea / objectBaseArea) * 100
-  
-  if (supportPercentage < 60) {
-    return {
-      isValid: false,
-      violations: [
-        `Insufficient support (${supportPercentage.toFixed(1)}%). Minimum required: 60%`
-      ]
-    }
-  }
-  
-  return { isValid: true, violations: [] }
-}
-```
-
-### BR-203: Objetos Frágiles
-
-**Regla**: Los objetos frágiles no pueden tener objetos pesados encima.
-
-**Razón**: Prevenir daños.
-
-**Criterios**:
-- Fragility = VERY_FRAGILE: 0kg encima
-- Fragility = FRAGILE: Máximo 50% del peso del objeto
-- Fragility = NORMAL: Sin restricción adicional
-
-**Validación**:
-```typescript
-function validateFragileObjects(
-  object: PackableObject,
-  weightAbove: number
-): ValidationResult {
-  switch (object.fragility) {
-    case FragilityLevel.VERY_FRAGILE:
-      if (weightAbove > 0) {
-        return {
-          isValid: false,
-          violations: ['Very fragile objects cannot have anything stacked on them']
-        }
-      }
-      break
-      
-    case FragilityLevel.FRAGILE:
-      const maxWeight = object.weight * 0.5
-      if (weightAbove > maxWeight) {
-        return {
-          isValid: false,
-          violations: [
-            `Weight above fragile object (${weightAbove}kg) exceeds safe limit (${maxWeight}kg)`
-          ]
-        }
-      }
-      break
-  }
-  
-  return { isValid: true, violations: [] }
-}
+// Si topBox.weight > bottomBox.weight × 1.5 AND topBox.baseArea > bottomBox.baseArea × 1.2 → warning
 ```
 
 ---
 
-## 4️⃣ Restricciones de Compatibilidad
+## 4. Restricciones de Apilamiento de Palets (StackedPallet)
 
-### BR-301: Incompatibilidad de Categorías
+### BR-301: Mismas Dimensiones de Planta
 
-**Regla**: Ciertas categorías de objetos no pueden estar juntas.
+**Regla**: Todos los palets dentro de un `StackedPallet` deben tener las mismas dimensiones de ancho × profundidad.
+**Razón**: Un palet de distinto formato no encajaría sobre el separador/palet inferior.
 
-**Razón**: Seguridad, regulaciones, contaminación.
+### BR-302: Separador Obligatorio
 
-**Incompatibilidades**:
-| Categoría 1 | Categoría 2 | Razón |
-|-------------|-------------|-------|
-| ELECTRONICS | CHEMICALS | Líquidos pueden dañar electrónicos |
-| FOOD | CHEMICALS | Contaminación |
-| FRAGILE | HEAVY_DUTY | Riesgo de aplastamiento |
+**Regla**: Entre un piso de palet y el siguiente siempre debe haber un separador.
+**Razón**: Estabilidad y protección de la carga inferior.
 
-**Validación**:
+### BR-303: Altura Total del Stack
+
+**Regla**: La altura total del `StackedPallet` (sumando palets + cajas + separadores) ≤ altura del contenedor donde está posicionado.
+
 ```typescript
-const INCOMPATIBLE_CATEGORIES = new Map<ObjectCategory, ObjectCategory[]>([
-  [ObjectCategory.ELECTRONICS, [ObjectCategory.CHEMICALS]],
-  [ObjectCategory.FOOD, [ObjectCategory.CHEMICALS]],
-  [ObjectCategory.FRAGILE, [ObjectCategory.HEAVY_DUTY]]
-])
-
-function validateCategoryCompatibility(
-  objects: PackableObject[]
-): ValidationResult {
-  const violations: string[] = []
-  
-  for (let i = 0; i < objects.length; i++) {
-    const incompatibles = INCOMPATIBLE_CATEGORIES.get(objects[i].category)
-    if (!incompatibles) continue
-    
-    for (let j = i + 1; j < objects.length; j++) {
-      if (incompatibles.includes(objects[j].category)) {
-        violations.push(
-          `Incompatible categories: ${objects[i].category} and ${objects[j].category}`
-        )
-      }
-    }
-  }
-  
-  return {
-    isValid: violations.length === 0,
-    violations
-  }
-}
+function validateStackHeight(stack: StackedPallet, containerHeight: number): ValidationResult
+// Σ (pallet[i].height + maxBoxHeight[i] + separator[i].height) ≤ containerHeight
 ```
 
-### BR-302: Reglas de Apilamiento por Categoría
+### BR-304: Peso Acumulado del Stack
 
-**Regla**: Los objetos solo pueden apilarse sobre categorías permitidas.
+**Regla**: El peso total del stack completo (todos los pisos + separadores) ≤ `pallet_base.maxWeight`.
+**Razón**: El palet de la base soporta toda la carga superior.
 
-**Validación**:
 ```typescript
-function validateStackingRules(
-  bottomObject: PackableObject,
-  topObject: PackableObject
-): ValidationResult {
-  if (!topObject.canBeStackedOnCategory(bottomObject.category)) {
-    return {
-      isValid: false,
-      violations: [
-        `${topObject.category} cannot be stacked on ${bottomObject.category}`
-      ]
-    }
-  }
-  
-  return { isValid: true, violations: [] }
-}
+function validateStackWeight(stack: StackedPallet): ValidationResult
+// El peso total de pisos 1..N + separadores ≤ stack.floors[0].pallet.maxWeight
 ```
 
 ---
 
-## 5️⃣ Restricciones de Estabilidad
+## 5. Restricciones de Contenedor (Room / Truck)
 
-### BR-401: Puntuación Mínima de Estabilidad
+### BR-401: Palet Dentro de Estancia (Polígono)
 
-**Regla**: La configuración debe tener una puntuación de estabilidad mínima.
+**Regla**: La huella 2D (planta) de un palet posicionado debe estar completamente dentro del polígono de la estancia.
+**Método**: Point-in-polygon test para las 4 esquinas del palet, más verificación de que ningún borde del palet cruza un borde del polígono.
 
-**Criterios**:
-- Score mínimo: 50/100
-- Recomendado: 70/100
-
-**Cálculo**:
 ```typescript
-function calculateStabilityScore(
-  pallet: Pallet,
-  objects: PlacedObject[]
-): number {
-  let score = 100
-  
-  // Factor 1: Desviación del centro de gravedad (hasta -30)
-  const cog = calculateCenterOfGravity(objects)
-  const cogOffset = calculateOffsetFromCenter(cog, pallet)
-  const cogPenalty = Math.min(cogOffset * 3, 30)
-  score -= cogPenalty
-  
-  // Factor 2: Objetos sin soporte adecuado (hasta -40)
-  const unsupportedCount = objects.filter(obj => 
-    !hasAdequateSupport(obj, objects)
-  ).length
-  const supportPenalty = unsupportedCount * 10
-  score -= supportPenalty
-  
-  // Factor 3: Distribución desigual de peso (hasta -20)
-  const distributionScore = calculateWeightDistributionScore(objects, pallet)
-  score -= (100 - distributionScore) * 0.2
-  
-  // Factor 4: Objetos muy altos y estrechos (hasta -10)
-  const instabilityPenalty = calculateInstabilityPenalty(objects)
-  score -= instabilityPenalty
-  
-  return Math.max(0, Math.min(100, score))
-}
+function validatePalletInRoom(pallet: PlacedPallet, room: Room): ValidationResult
 ```
 
-### BR-402: Pirámide Invertida Prohibida
+### BR-402: Palet Dentro de Camión
 
-**Regla**: No se permite apilar objetos pesados sobre objetos livianos pequeños.
+**Regla**: La AABB del `StackedPallet` posicionado debe estar dentro del volumen rectangular del camión.
 
-**Razón**: Alta probabilidad de colapso.
-
-**Validación**:
 ```typescript
-function validateInvertedPyramid(
-  bottomObject: PackableObject,
-  topObject: PackableObject
-): ValidationResult {
-  const bottomArea = bottomObject.dimensions.width * 
-                     bottomObject.dimensions.depth
-  const topArea = topObject.dimensions.width * 
-                  topObject.dimensions.depth
-  
-  // Si el objeto de arriba es más pesado Y tiene más área
-  if (topObject.weight > bottomObject.weight * 1.5 &&
-      topArea > bottomArea * 1.2) {
-    return {
-      isValid: false,
-      violations: ['Inverted pyramid configuration detected - unstable']
-    }
-  }
-  
-  return { isValid: true, violations: [] }
-}
+function validatePalletInTruck(pallet: PlacedPallet, truck: Truck): ValidationResult
 ```
+
+### BR-403: Altura de Estancia
+
+**Regla**: La altura total de un palet posicionado ≤ `room.ceilingHeight`.
+
+### BR-404: Altura de Camión
+
+**Regla**: La altura total de un palet cargado ≤ `truck.dimensions.height`.
 
 ---
 
-## 📋 Resumen de Prioridades
+## 6. Restricciones de Estabilidad
 
-### 🔴 Críticas (Bloquean configuración)
-- BR-001: Límites del pallet
-- BR-002: Sin colisiones
-- BR-101: Capacidad máxima de peso
-- BR-201: Capacidad de soporte
-- BR-202: Soporte adecuado
-- BR-301: Incompatibilidad de categorías
+### BR-501: Score de Estabilidad Mínimo
 
-### 🟡 Advertencias (Permiten continuar con aviso)
-- BR-003: Altura máxima
-- BR-102: Distribución de peso
-- BR-203: Objetos frágiles
-- BR-401: Puntuación de estabilidad
+**Regla**: El score de estabilidad de un palet cargado debe ser ≥ 50 para permitir la configuración.
+**Recomendado**: ≥ 70.
+**Severidad**: Warning entre 50-70; error < 50.
 
-### 🟢 Recomendaciones (Sugerencias)
-- BR-302: Reglas de apilamiento óptimas
-- BR-402: Configuraciones inestables
+### BR-502: Centro de Gravedad
+
+**Regla**: El centro de gravedad (CoG) del palet cargado debe proyectarse dentro del polígono de soporte (la planta del palet).
+**Razón**: Si el CoG proyectado sale del perímetro, hay riesgo de volcado.
+
+```typescript
+function calculateCenterOfGravity(boxes: PlacedBox[]): Position3D
+function isCoGInsideSupportPolygon(cog: Position3D, palletDims: Dimensions3D): boolean
+```
+
+### BR-503: Altura del Centro de Gravedad
+
+**Regla**: Un CoG alto (> 60 % de la altura total de carga) con distribución desigual genera warning de volcado.
 
 ---
 
-## 🧪 Testing de Reglas
+## Resumen de Severidades
 
-Cada regla debe tener tests exhaustivos:
+### Errores (Bloquean — configuración inválida)
+| Código | Regla |
+|--------|-------|
+| BR-001 | Caja fuera de palet |
+| BR-002 | Colisión entre cajas |
+| BR-003 | Colisión entre palets |
+| BR-004 | Objeto flotando sin soporte |
+| BR-101 | Peso de palet excedido |
+| BR-102 | Peso de camión excedido |
+| BR-103 | Peso sobre caja frágil excedido |
+| BR-201 | Apilamiento sobre caja no apilable |
+| BR-301 | Dimensiones de planta distintas en stack |
+| BR-302 | Falta separador entre pisos |
+| BR-303 | Stack excede altura del contenedor |
+| BR-304 | Stack excede peso del palet base |
+| BR-401 | Palet fuera del polígono de estancia |
+| BR-402 | Palet fuera del camión |
+| BR-403 | Palet excede techo de estancia |
+| BR-404 | Palet excede techo de camión |
+| BR-502 | CoG fuera de polígono de soporte |
+
+### Warnings (Permiten continuar con aviso)
+| Código | Regla |
+|--------|-------|
+| BR-104 | Distribución de peso descentrada |
+| BR-203 | Pirámide invertida |
+| BR-501 | Estabilidad baja (50-70) |
+| BR-503 | CoG alto con distribución desigual |
+
+---
+
+## Testing de Reglas
+
+Cada regla debe tener al menos:
+- Test positivo (configuración válida → sin violaciones).
+- Test negativo (violación → error/warning correcto con código e IDs involucrados).
+- Test límite (en el borde exacto de la restricción).
 
 ```typescript
-describe('Business Rule BR-001: Physical Bounds', () => {
-  it('should reject object extending beyond width', () => {
-    const pallet = createTestPallet({ width: 1000 })
-    const object = createTestObject({
-      position: [600, 0, 0],
-      dimensions: { width: 500 }
-    })
-    
-    const result = validatePhysicalBounds(pallet, object)
-    
-    expect(result.isValid).toBe(false)
-    expect(result.violations).toContain('beyond pallet width')
-  })
+describe('BR-001: Box in Pallet Bounds', () => {
+  it('acepta caja dentro de límites')
+  it('rechaza caja que sobresale por X')
+  it('rechaza caja que sobresale por Z')
+  it('acepta caja en el borde exacto')
 })
 ```
 
 ---
 
-Las reglas de negocio son el corazón del dominio. Deben implementarse en el domain layer, no en la UI ni en infraestructura.
+Las reglas de negocio se implementan como funciones puras en el domain layer. Los componentes visuales las consumen a través de hooks (`usePhysicsValidation`). La librería NO decide qué hacer ante un error — reporta violaciones y el desarrollador decide la UX.

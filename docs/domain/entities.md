@@ -2,31 +2,159 @@
 
 Las entidades son objetos con identidad única que persiste en el tiempo. Aunque sus atributos cambien, su identidad permanece.
 
-## 🎯 Entidades Principales
+> **Nota**: Pallet Builder es una **librería**. Las entidades del core son TypeScript puro, sin dependencias de React ni Three.js. Los componentes visuales consumen estas entidades vía props.
 
-### 1. Pallet (Entidad Raíz)
+---
 
-Representa la plataforma base sobre la cual se colocan los objetos.
+## Mapa de Entidades
+
+```
+Warehouse (Aggregate Root)
+ └── Room[]  ────────────────────────┐
+      └── PlacedPallet[]             │
+           └── StackedPallet         │  Comparten
+                ├── PalletFloor[]    │  reglas físicas
+                │    ├── Pallet      │
+                │    └── Box[]       │
+                └── Separator[]      │
+                                     │
+Truck (Aggregate Root) ──────────────┘
+ └── PlacedPallet[]
+      └── (misma jerarquía)
+
+PackingStrategy (Adapter) ← ColumnStrategy
+                           ← TypeGroupStrategy
+                           ← BinPacking3DStrategy
+                           ← CustomStrategy
+```
+
+---
+
+## 1. Warehouse (Almacén — Aggregate Root)
+
+Contenedor lógico que agrupa estancias.
+
+```typescript
+interface Warehouse {
+  id: string
+  name: string
+  rooms: Room[]
+  metadata: Record<string, unknown>
+}
+```
+
+**Responsabilidades**:
+- Agrupar y gestionar estancias.
+- Validar que los IDs de estancia sean únicos.
+
+---
+
+## 2. Room (Estancia)
+
+Espacio físico dentro de un almacén. Puede tener forma irregular.
+
+```typescript
+interface Room {
+  id: string
+  name: string
+
+  /** Polígono 2D (planta) definido por vértices en mm.
+      Mínimo 3 vértices. Admite formas convexas y cóncavas (L, U, T…). */
+  floorPolygon: Point2D[]
+
+  /** Altura del techo en mm */
+  ceilingHeight: number
+
+  /** Palets posicionados en esta estancia */
+  pallets: PlacedPallet[]
+
+  metadata: Record<string, unknown>
+}
+
+interface Point2D {
+  x: number  // mm
+  z: number  // mm
+}
+```
+
+**Responsabilidades**:
+- Definir límites físicos del espacio mediante polígono.
+- Validar que los palets estén dentro del polígono.
+- Controlar la altura máxima (ceilingHeight).
+
+---
+
+## 3. Truck (Camión — Aggregate Root)
+
+Espacio de carga de un vehículo de transporte.
+
+```typescript
+interface Truck {
+  id: string
+  name: string
+  truckType: TruckType
+
+  /** Dimensiones internas del espacio de carga en mm */
+  dimensions: Dimensions3D
+
+  /** Peso máximo de carga en kg */
+  maxWeight: number
+
+  /** Palets cargados */
+  pallets: PlacedPallet[]
+
+  /** Matrícula u otra referencia */
+  licensePlate?: string
+  metadata: Record<string, unknown>
+}
+
+enum TruckType {
+  BOX = 'BOX',                   // Caja cerrada estándar
+  REFRIGERATED = 'REFRIGERATED', // Frigorífico
+  FLATBED = 'FLATBED',           // Plataforma
+  TAUTLINER = 'TAUTLINER',      // Lona lateral
+  CUSTOM = 'CUSTOM'
+}
+
+/** Configuraciones predefinidas de dimensiones por tipo */
+const TRUCK_PRESETS: Record<Exclude<TruckType, TruckType.CUSTOM>, TruckPreset> = {
+  BOX:          { width: 2480, height: 2700, depth: 13600, maxWeight: 24000 },
+  REFRIGERATED: { width: 2440, height: 2590, depth: 13100, maxWeight: 22000 },
+  FLATBED:      { width: 2480, height: 2700, depth: 13600, maxWeight: 25000 },
+  TAUTLINER:    { width: 2480, height: 2700, depth: 13600, maxWeight: 24000 },
+}
+```
+
+**Responsabilidades**:
+- Definir espacio rectangular de carga con dimensiones y peso máximo.
+- Ofrecer presets por tipo de camión.
+- Permitir tipos `CUSTOM` con dimensiones arbitrarias.
+
+---
+
+## 4. Pallet
+
+Plataforma física sobre la que se colocan cajas.
 
 ```typescript
 interface Pallet {
-  // Identidad
   id: string
-  
-  // Propiedades estructurales
-  dimensions: Dimensions
+
+  /** Dimensiones físicas del palet (ancho × profundidad × grosor) en mm */
+  dimensions: Dimensions3D
+
   material: PalletMaterial
-  
-  // Capacidades
-  maxWeight: Weight
-  maxHeight: number
-  
-  // Estado
-  objects: PlacedObject[]
-  
-  // Metadata
-  createdAt: Date
-  updatedAt: Date
+
+  /** Peso máximo de carga en kg */
+  maxWeight: number
+
+  /** Altura máxima de apilamiento de cajas sobre este palet, en mm */
+  maxStackHeight: number
+
+  /** Peso propio del palet vacío en kg */
+  weight: number
+
+  metadata: Record<string, unknown>
 }
 
 enum PalletMaterial {
@@ -35,484 +163,347 @@ enum PalletMaterial {
   METAL = 'METAL',
   COMPOSITE = 'COMPOSITE'
 }
-
-// Implementación de ejemplo
-class PalletEntity implements Pallet {
-  constructor(
-    public readonly id: string,
-    public readonly dimensions: Dimensions,
-    public readonly material: PalletMaterial,
-    public readonly maxWeight: Weight,
-    public readonly maxHeight: number,
-    private _objects: PlacedObject[] = []
-  ) {}
-  
-  get objects(): readonly PlacedObject[] {
-    return this._objects
-  }
-  
-  get currentWeight(): Weight {
-    return this._objects.reduce(
-      (total, obj) => total + obj.weight,
-      0
-    )
-  }
-  
-  get utilization(): number {
-    const totalVolume = this.dimensions.volume
-    const usedVolume = this._objects.reduce(
-      (total, obj) => total + obj.dimensions.volume,
-      0
-    )
-    return usedVolume / totalVolume
-  }
-  
-  canAddObject(object: PackableObject): ValidationResult {
-    const violations: string[] = []
-    
-    // Validar peso
-    if (this.currentWeight + object.weight > this.maxWeight) {
-      violations.push('Weight limit exceeded')
-    }
-    
-    // Validar altura
-    if (object.dimensions.height > this.maxHeight) {
-      violations.push('Object exceeds maximum height')
-    }
-    
-    // Validar dimensiones del pallet
-    if (!this.dimensions.canContain(object.dimensions)) {
-      violations.push('Object dimensions exceed pallet bounds')
-    }
-    
-    return {
-      isValid: violations.length === 0,
-      violations
-    }
-  }
-  
-  addObject(object: PackableObject, position: Position): Result<void> {
-    const validation = this.canAddObject(object)
-    
-    if (!validation.isValid) {
-      return Result.fail(validation.violations)
-    }
-    
-    const placedObject = new PlacedObject(
-      object,
-      position,
-      Date.now()
-    )
-    
-    this._objects.push(placedObject)
-    
-    return Result.ok()
-  }
-  
-  removeObject(objectId: string): boolean {
-    const initialLength = this._objects.length
-    this._objects = this._objects.filter(obj => obj.id !== objectId)
-    return this._objects.length < initialLength
-  }
-  
-  clear(): void {
-    this._objects = []
-  }
-}
 ```
 
-### 2. PackableObject (Objeto Empaquetable)
-
-Representa cualquier elemento que puede ser colocado en un pallet.
-
-```typescript
-interface PackableObject {
-  // Identidad
-  id: string
-  name: string
-  sku?: string
-  
-  // Propiedades físicas
-  dimensions: Dimensions
-  weight: Weight
-  
-  // Clasificación
-  category: ObjectCategory
-  fragility: FragilityLevel
-  
-  // Reglas de apilamiento
-  stackable: boolean
-  maxStackWeight?: Weight
-  canBeStackedOn: ObjectCategory[]
-  
-  // Visualización
-  color?: string
-  texture?: string
-  
-  // Metadata
-  createdAt: Date
-}
-
-enum ObjectCategory {
-  ELECTRONICS = 'ELECTRONICS',
-  FRAGILE = 'FRAGILE',
-  HEAVY_DUTY = 'HEAVY_DUTY',
-  FOOD = 'FOOD',
-  CHEMICALS = 'CHEMICALS',
-  GENERAL = 'GENERAL'
-}
-
-enum FragilityLevel {
-  VERY_FRAGILE = 'VERY_FRAGILE',
-  FRAGILE = 'FRAGILE',
-  NORMAL = 'NORMAL',
-  ROBUST = 'ROBUST',
-  VERY_ROBUST = 'VERY_ROBUST'
-}
-
-class PackableObjectEntity implements PackableObject {
-  constructor(
-    public readonly id: string,
-    public readonly name: string,
-    public readonly dimensions: Dimensions,
-    public readonly weight: Weight,
-    public readonly category: ObjectCategory,
-    public readonly fragility: FragilityLevel = FragilityLevel.NORMAL,
-    public readonly stackable: boolean = true,
-    public readonly maxStackWeight?: Weight,
-    public readonly canBeStackedOn: ObjectCategory[] = [],
-    public readonly sku?: string,
-    public readonly color?: string,
-    public readonly texture?: string
-  ) {}
-  
-  get volume(): number {
-    return this.dimensions.volume
-  }
-  
-  get density(): number {
-    return this.weight / this.volume
-  }
-  
-  canSupportWeight(weight: Weight): boolean {
-    if (!this.stackable) return false
-    if (!this.maxStackWeight) return true
-    return weight <= this.maxStackWeight
-  }
-  
-  canBeStackedOnCategory(category: ObjectCategory): boolean {
-    if (this.canBeStackedOn.length === 0) return true
-    return this.canBeStackedOn.includes(category)
-  }
-  
-  isCompatibleWith(other: PackableObject): boolean {
-    // Electrónicos no con líquidos
-    if (
-      this.category === ObjectCategory.ELECTRONICS &&
-      other.category === ObjectCategory.CHEMICALS
-    ) {
-      return false
-    }
-    
-    // Comida no con químicos
-    if (
-      this.category === ObjectCategory.FOOD &&
-      other.category === ObjectCategory.CHEMICALS
-    ) {
-      return false
-    }
-    
-    return true
-  }
-}
-```
-
-### 3. PlacedObject (Objeto Colocado)
-
-Representa un objeto que ya ha sido posicionado en el pallet.
-
-```typescript
-interface PlacedObject {
-  // Referencia al objeto
-  id: string
-  object: PackableObject
-  
-  // Posición en el espacio 3D
-  position: Position
-  rotation: Rotation
-  
-  // Relaciones espaciales
-  supportedBy: string[] // IDs de objetos debajo
-  supporting: string[] // IDs de objetos encima
-  
-  // Estado
-  placedAt: Date
-  locked: boolean
-}
-
-class PlacedObjectEntity implements PlacedObject {
-  constructor(
-    public readonly id: string,
-    public readonly object: PackableObject,
-    public position: Position,
-    public rotation: Rotation = { x: 0, y: 0, z: 0 },
-    public supportedBy: string[] = [],
-    public supporting: string[] = [],
-    public readonly placedAt: Date = new Date(),
-    public locked: boolean = false
-  ) {}
-  
-  get bounds(): BoundingBox {
-    return BoundingBox.fromPositionAndDimensions(
-      this.position,
-      this.object.dimensions,
-      this.rotation
-    )
-  }
-  
-  moveTo(newPosition: Position): void {
-    if (this.locked) {
-      throw new Error('Cannot move locked object')
-    }
-    this.position = newPosition
-  }
-  
-  rotateTo(newRotation: Rotation): void {
-    if (this.locked) {
-      throw new Error('Cannot rotate locked object')
-    }
-    this.rotation = newRotation
-  }
-  
-  lock(): void {
-    this.locked = true
-  }
-  
-  unlock(): void {
-    this.locked = false
-  }
-  
-  isSupported(): boolean {
-    return this.supportedBy.length > 0 || this.isOnBase()
-  }
-  
-  isOnBase(): boolean {
-    return this.position.y <= 0.01 // Tolerance
-  }
-  
-  intersects(other: PlacedObject): boolean {
-    return this.bounds.intersects(other.bounds)
-  }
-}
-```
-
-### 4. PalletConfiguration (Configuración de Pallet)
-
-Representa una configuración completa y guardable de un pallet con sus objetos.
-
-```typescript
-interface PalletConfiguration {
-  // Identidad
-  id: string
-  name: string
-  description?: string
-  
-  // Configuración del pallet
-  palletSpec: PalletSpecification
-  
-  // Objetos colocados
-  placedObjects: PlacedObjectData[]
-  
-  // Métricas
-  totalWeight: Weight
-  utilizationPercentage: number
-  stabilityScore: number
-  
-  // Validación
-  isValid: boolean
-  validationErrors: string[]
-  
-  // Metadata
-  createdBy?: string
-  createdAt: Date
-  updatedAt: Date
-  tags: string[]
-}
-
-interface PalletSpecification {
-  dimensions: Dimensions
-  material: PalletMaterial
-  maxWeight: Weight
-  maxHeight: number
-}
-
-interface PlacedObjectData {
-  objectId: string
-  objectSpec: PackableObjectSpec
-  position: Position
-  rotation: Rotation
-}
-
-class PalletConfigurationEntity implements PalletConfiguration {
-  constructor(
-    public readonly id: string,
-    public name: string,
-    public readonly palletSpec: PalletSpecification,
-    private _placedObjects: PlacedObjectData[] = [],
-    public description?: string,
-    public readonly createdAt: Date = new Date(),
-    public updatedAt: Date = new Date(),
-    public tags: string[] = []
-  ) {}
-  
-  get placedObjects(): readonly PlacedObjectData[] {
-    return this._placedObjects
-  }
-  
-  get totalWeight(): Weight {
-    return this._placedObjects.reduce(
-      (total, obj) => total + obj.objectSpec.weight,
-      0
-    )
-  }
-  
-  get utilizationPercentage(): number {
-    const totalVolume = this.palletSpec.dimensions.volume
-    const usedVolume = this._placedObjects.reduce(
-      (total, obj) => total + obj.objectSpec.dimensions.volume,
-      0
-    )
-    return (usedVolume / totalVolume) * 100
-  }
-  
-  clone(newName: string): PalletConfigurationEntity {
-    return new PalletConfigurationEntity(
-      crypto.randomUUID(),
-      newName,
-      { ...this.palletSpec },
-      [...this._placedObjects],
-      this.description,
-      new Date(),
-      new Date(),
-      [...this.tags]
-    )
-  }
-  
-  addTag(tag: string): void {
-    if (!this.tags.includes(tag)) {
-      this.tags.push(tag)
-      this.updatedAt = new Date()
-    }
-  }
-  
-  removeTag(tag: string): void {
-    this.tags = this.tags.filter(t => t !== tag)
-    this.updatedAt = new Date()
-  }
-}
-```
-
-## 🔄 Ciclo de Vida de las Entidades
-
-### Pallet
-```
-Created → Active → Modified → Validated → Exported/Saved
-```
-
-### PackableObject
-```
-Defined → Available → Placed → [Moved/Rotated]* → Finalized
-```
-
-### Configuration
-```
-Created → Building → Validating → [Valid/Invalid] → Saved
-```
-
-## 📊 Diagramas de Relaciones
-
-```
-┌──────────────────────────────┐
-│  PalletConfiguration         │
-│  - id                        │
-│  - name                      │
-│  - palletSpec                │
-└──────────┬───────────────────┘
-           │ contains
-           │
-           ▼
-┌──────────────────────────────┐
-│  Pallet                      │
-│  - id                        │
-│  - dimensions                │◆──────┐
-│  - maxWeight                 │       │
-└──────────┬───────────────────┘       │
-           │ contains                  │
-           │                           │
-           ▼                           ▼
-┌──────────────────────────────┐  ┌─────────────────────┐
-│  PlacedObject                │  │  PackableObject     │
-│  - id                        │──│  - id               │
-│  - position                  │  │  - dimensions       │
-│  - rotation                  │  │  - weight           │
-└──────────────────────────────┘  └─────────────────────┘
-```
-
-## 🎯 Factories
-
-Para crear entidades complejas:
-
-```typescript
-class PalletFactory {
-  static createStandardEuroPallet(): Pallet {
-    return new PalletEntity(
-      crypto.randomUUID(),
-      new Dimensions(1200, 800, 144), // mm
-      PalletMaterial.WOOD,
-      1000, // kg
-      2000 // mm max height
-    )
-  }
-  
-  static createStandardAmericanPallet(): Pallet {
-    return new PalletEntity(
-      crypto.randomUUID(),
-      new Dimensions(1219, 1016, 145), // mm (48"x40")
-      PalletMaterial.WOOD,
-      1200, // kg
-      2134 // mm (7 feet)
-    )
-  }
-}
-
-class PackableObjectFactory {
-  static createBox(
-    name: string,
-    width: number,
-    height: number,
-    depth: number,
-    weight: number
-  ): PackableObject {
-    return new PackableObjectEntity(
-      crypto.randomUUID(),
-      name,
-      new Dimensions(width, height, depth),
-      weight,
-      ObjectCategory.GENERAL,
-      FragilityLevel.NORMAL
-    )
-  }
-}
-```
-
-## 💡 Mejores Prácticas
-
-1. **Inmutabilidad de IDs**: Los IDs nunca deben cambiar
-2. **Validación en Construcción**: Validar en el constructor
-3. **Encapsulación**: No exponer colecciones mutables
-4. **Rich Domain Model**: Poner lógica de negocio en las entidades
-5. **Factories para Complejidad**: Usar factories para creación compleja
+**Responsabilidades**:
+- Definir capacidad de carga y dimensiones.
 
 ---
 
-Las entidades son el corazón del dominio. Mantenerlas ricas en comportamiento es clave para un buen diseño.
+## 5. Box (Caja)
+
+Elemento individual que se coloca sobre un palet.
+
+```typescript
+interface Box {
+  id: string
+
+  /** Dimensiones en mm */
+  dimensions: Dimensions3D
+
+  /** Peso en kg */
+  weight: number
+
+  /** Campos fijos */
+  sku?: string
+  type?: string
+  fragile: boolean
+  fragilityMaxWeight?: number   // kg que soporta encima si fragile=true
+  stackable: boolean
+
+  /** Aspecto visual */
+  color?: string
+  texture?: string
+  modelUrl?: string             // GLTF/GLB personalizado
+
+  /** Metadatos libres que el desarrollador necesite */
+  metadata: Record<string, unknown>
+}
+```
+
+**Responsabilidades**:
+- Transportar propiedades físicas y visuales.
+- Servir de input para algoritmos de empaquetado.
+
+---
+
+## 6. PlacedBox (Caja Colocada)
+
+Una `Box` posicionada dentro de un palet.
+
+```typescript
+interface PlacedBox {
+  id: string
+  box: Box
+
+  /** Posición relativa al palet (origen = esquina inferior-izquierda-trasera) */
+  position: Position3D
+
+  /** Rotación discreta: 0 | 90 | 180 | 270 grados en cada eje */
+  rotation: DiscreteRotation
+
+  /** IDs de cajas que soportan a esta */
+  supportedBy: string[]
+
+  /** IDs de cajas que esta soporta */
+  supporting: string[]
+}
+
+interface Position3D {
+  x: number  // mm – ancho
+  y: number  // mm – alto (vertical)
+  z: number  // mm – profundidad
+}
+
+interface DiscreteRotation {
+  x: 0 | 90 | 180 | 270
+  y: 0 | 90 | 180 | 270
+  z: 0 | 90 | 180 | 270
+}
+```
+
+---
+
+## 7. Separator (Separador)
+
+Plano rígido que se coloca entre pisos de palet para permitir apilamiento vertical.
+
+```typescript
+interface Separator {
+  id: string
+
+  /** Dimensiones: ancho × profundidad × grosor, en mm */
+  dimensions: Dimensions3D
+
+  material: SeparatorMaterial
+
+  /** Peso propio en kg */
+  weight: number
+
+  metadata: Record<string, unknown>
+}
+
+enum SeparatorMaterial {
+  CARDBOARD = 'CARDBOARD',
+  WOOD = 'WOOD',
+  PLASTIC = 'PLASTIC'
+}
+```
+
+---
+
+## 8. PalletFloor (Piso de Palet)
+
+Un nivel individual dentro de un `StackedPallet`. Contiene un palet y sus cajas.
+
+```typescript
+interface PalletFloor {
+  /** Índice del piso (0 = base) */
+  level: number
+  pallet: Pallet
+  boxes: PlacedBox[]
+
+  /** Separador situado ENCIMA de este piso (nulo si es el último) */
+  separatorAbove?: Separator
+}
+```
+
+---
+
+## 9. StackedPallet (Palet Apilado / Compuesto)
+
+Composición vertical de uno o más pisos de palet con separadores intermedios.
+
+```typescript
+interface StackedPallet {
+  id: string
+  floors: PalletFloor[]   // al menos 1
+
+  /** Altura total calculada: suma de (palet.height + cajas + separador) por piso */
+  readonly totalHeight: number
+
+  /** Peso total calculado: suma de palets + separadores + cajas */
+  readonly totalWeight: number
+
+  metadata: Record<string, unknown>
+}
+```
+
+**Invariantes**:
+- Todos los palets del stack deben tener las mismas dimensiones de planta (ancho × profundidad).
+- La altura total no puede exceder la altura del contenedor (estancia o camión).
+- El peso total no puede exceder el peso máximo del palet base.
+
+---
+
+## 10. PlacedPallet (Palet Posicionado)
+
+Un `StackedPallet` posicionado dentro de una `Room` o un `Truck`.
+
+```typescript
+interface PlacedPallet {
+  id: string
+  stackedPallet: StackedPallet
+
+  /** Posición en el plano del suelo del contenedor (XZ), en mm */
+  position: Position3D
+
+  /** Rotación en el plano horizontal (Y), en grados */
+  yRotation: 0 | 90 | 180 | 270
+}
+```
+
+---
+
+## 11. PackingStrategy (Interfaz Adapter)
+
+Contrato para algoritmos de colocación automática de cajas en un palet.
+
+```typescript
+interface PackingStrategy {
+  readonly id: string
+  readonly name: string
+
+  pack(boxes: Box[], pallet: Pallet): PackingResult
+}
+
+interface PackingResult {
+  placements: PlacedBox[]
+  metrics: PackingMetrics
+  unplacedBoxes: Box[]       // cajas que no cupieron
+}
+
+interface PackingMetrics {
+  volumeUtilization: number   // 0–1
+  weightUtilization: number   // 0–1
+  centerOfGravity: Position3D
+  stabilityScore: number      // 0–100
+}
+```
+
+**Implementaciones incluidas de serie**:
+- `ColumnPackingStrategy` — columnas verticales por tipo de caja.
+- `TypeGroupPackingStrategy` — agrupación por tipo, relleno capa a capa.
+- `BinPacking3DStrategy` — optimización volumétrica (First Fit Decreasing Height).
+
+**Extensibilidad**: El desarrollador registra sus propias estrategias implementando la interfaz.
+
+---
+
+## Value Objects
+
+### Dimensions3D
+```typescript
+interface Dimensions3D {
+  width: number   // mm (X)
+  height: number  // mm (Y)
+  depth: number   // mm (Z)
+}
+```
+
+### BoundingBox
+```typescript
+interface BoundingBox {
+  minX: number; maxX: number
+  minY: number; maxY: number
+  minZ: number; maxZ: number
+}
+```
+
+### ValidationResult
+```typescript
+interface ValidationResult {
+  isValid: boolean
+  violations: Violation[]
+}
+
+interface Violation {
+  code: string        // ej: 'COLLISION', 'WEIGHT_EXCEEDED'
+  severity: 'error' | 'warning'
+  message: string
+  involvedIds: string[]
+}
+```
+
+---
+
+## Enums Compartidos
+
+```typescript
+enum PalletMaterial { WOOD, PLASTIC, METAL, COMPOSITE }
+enum SeparatorMaterial { CARDBOARD, WOOD, PLASTIC }
+enum TruckType { BOX, REFRIGERATED, FLATBED, TAUTLINER, CUSTOM }
+```
+
+---
+
+## Diagrama de Relaciones
+
+```
+┌──────────────┐        ┌──────────────┐
+│  Warehouse   │        │    Truck     │
+│  - rooms[]   │        │  - pallets[] │
+└──────┬───────┘        └──────┬───────┘
+       │ 1..*                  │ 0..*
+       ▼                       ▼
+┌──────────────┐       ┌───────────────┐
+│    Room      │       │ PlacedPallet  │◄──────────────────┐
+│  - pallets[] │──────▶│  - position   │                   │
+└──────────────┘       │  - rotation   │                   │
+                       └──────┬────────┘                   │
+                              │ 1                          │
+                              ▼                            │
+                       ┌───────────────┐                   │
+                       │ StackedPallet │                   │
+                       │  - floors[]   │                   │
+                       └──────┬────────┘                   │
+                              │ 1..*                       │
+                              ▼                            │
+                       ┌───────────────┐                   │
+                       │ PalletFloor   │                   │
+                       │  - pallet     │                   │
+                       │  - boxes[]    │                   │
+                       │  - separator? │                   │
+                       └──┬────┬───┬───┘                   │
+                          │    │   │                       │
+              ┌───────────┘    │   └──────────┐            │
+              ▼                ▼              ▼            │
+        ┌──────────┐   ┌───────────┐  ┌───────────┐      │
+        │  Pallet  │   │ PlacedBox │  │ Separator │      │
+        │          │   │  - box    │  │           │      │
+        └──────────┘   │  - pos    │  └───────────┘      │
+                       └─────┬─────┘                      │
+                             │                            │
+                             ▼                            │
+                       ┌──────────┐                       │
+                       │   Box    │                       │
+                       │ - sku    │                       │
+                       │ - meta   │                       │
+                       └──────────┘                       │
+                                                          │
+                       ┌──────────────────┐               │
+                       │ PackingStrategy  │───── pack ───▶│
+                       │  (adapter)       │  genera PlacedBox[]
+                       └──────────────────┘
+```
+
+---
+
+## Factories
+
+```typescript
+class PalletFactory {
+  static euro(): Pallet          // 1200×800×144 mm, madera, 1000 kg
+  static american(): Pallet      // 1219×1016×145 mm, madera, 1200 kg
+  static asia(): Pallet          // 1100×1100×150 mm, madera, 1000 kg
+  static custom(dims: Dimensions3D, opts?: Partial<Pallet>): Pallet
+}
+
+class TruckFactory {
+  static fromPreset(type: TruckType): Truck
+  static custom(dims: Dimensions3D, maxWeight: number): Truck
+}
+```
+
+---
+
+## Ciclo de Vida
+
+| Entidad | Estado |
+|---|---|
+| Warehouse | Configurado → Estancias definidas → Palets distribuidos |
+| Room | Creada → Polígono definido → Palets posicionados |
+| Truck | Tipo seleccionado → Palets cargados → Validado |
+| StackedPallet | Creado → Pisos añadidos → Cajas empaquetadas → Posicionado |
+| Box | Definida → Colocada → Movida/Rotada → Fijada |
+
+---
+
+## Mejores Prácticas
+
+1. **IDs inmutables** — nunca reasignar.
+2. **Validación en construcción** — las factories validan invariantes.
+3. **Colecciones encapsuladas** — no exponer arrays mutables; operaciones vía métodos.
+4. **Metadatos extensibles** — `Record<string, unknown>` en toda entidad para que el consumidor inyecte lo que necesite.
+5. **Separación core/UI** — las entidades no importan React ni Three.js.
+6. **Patrón Adapter** — `PackingStrategy` es la interfaz; las implementaciones se registran e intercambian en runtime.

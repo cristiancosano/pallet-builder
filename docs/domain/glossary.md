@@ -2,347 +2,303 @@
 
 Diccionario de términos utilizados en el proyecto. Este es nuestro **Lenguaje Ubicuo** (Ubiquitous Language).
 
-## 📚 Términos Principales
+> **Nota**: Pallet Builder es una librería. En los puntos donde se habla de "usuario", se refiere tanto al operario/gerente que usa la aplicación final como al desarrollador que integra la librería. El contexto lo aclarará.
+
+---
+
+## Términos Principales
 
 ### A
 
 **AABB (Axis-Aligned Bounding Box)**
-- Caja delimitadora alineada con los ejes
-- Se usa para detección de colisiones eficiente
-- Definida por puntos mínimo y máximo en cada eje
+- Caja delimitadora alineada con los ejes.
+- Se usa para detección de colisiones eficiente.
+- Definida por puntos mínimo y máximo en cada eje.
+
+**Almacén (Warehouse)**
+- Entidad raíz que agrupa una o más estancias.
+- Representa la totalidad de un espacio de almacenamiento.
+- Ver → Warehouse.
 
 **Apilamiento (Stacking)**
-- Acción de colocar un objeto sobre otro
-- Debe respetar reglas de peso y estabilidad
-- Algunos objetos no son apilables
+- Colocar un objeto sobre otro respetando reglas de peso y estabilidad.
+- Aplica a cajas sobre palet y a palets sobre palets (con separador).
+
+**Apilamiento de Palets (Pallet Stacking)**
+- Colocar un palet encima de otro (del mismo formato de planta) con un separador intermedio.
+- Permite "palets parciales" — pedidos pequeños que comparten palet base.
+- Ver → StackedPallet, Separator.
 
 ### B
 
 **Bin Packing**
-- Algoritmo de optimización para empaquetar objetos
-- Objetivo: maximizar uso del espacio
-- Versión 3D aplicada a pallets
-
-**Bounded Context**
-- Límite explícito dentro del cual aplica un modelo de dominio
-- Ej: Contexto de visualización vs contexto de cálculos
+- Algoritmo de optimización para empaquetar objetos maximizando uso del espacio.
+- Versión 3D aplicada a palets.
+- Ver → PackingStrategy.
 
 **Bounding Box**
-- Ver AABB
-- Representación simple de los límites de un objeto
+- Ver AABB.
 
 ### C
 
+**Caja (Box)**
+- Elemento individual que se coloca sobre un palet.
+- Tiene dimensiones, peso, SKU, fragilidad, metadatos.
+- Unidad básica de carga.
+
+**Caja Colocada (PlacedBox)**
+- Una Box ya posicionada en un palet con coordenadas XYZ y rotación.
+- Registra relaciones de soporte (qué hay encima/debajo).
+
+**Camión (Truck)**
+- Entidad raíz que representa el espacio útil de carga de un vehículo.
+- Se define por tipo (caja cerrada, frigorífico, plataforma, tautliner, custom), dimensiones internas y peso máximo.
+
 **Capacidad de Carga (Load Capacity)**
-- Peso máximo que puede soportar un pallet
-- Típicamente entre 500kg y 2000kg
-- Varía según material y construcción
+- Peso máximo que puede soportar un palet o camión.
+- Típicamente 500 kg – 2000 kg para palets; 20-25 t para camiones.
 
 **Centro de Gravedad (Center of Gravity / CoG)**
-- Punto donde se concentra el peso total
-- Crucial para estabilidad
-- Debe estar cerca del centro del pallet
-
-**Centro de Masa (Center of Mass)**
-- Sinónimo de Centro de Gravedad
-- Calculado como promedio ponderado de posiciones
+- Punto donde se concentra el peso total de la carga.
+- Debe estar dentro del polígono de soporte para evitar volcado.
+- Calculado como promedio ponderado de posiciones por peso.
 
 **Colisión (Collision)**
-- Superposición física entre dos objetos
-- Debe evitarse en configuraciones válidas
-- Detectada mediante AABB o algoritmos más precisos
+- Superposición física entre dos objetos.
+- Detectada mediante AABB.
+- Siempre es un error bloqueante (BR-002, BR-003).
 
-**Configuración (Configuration)**
-- Disposición completa de objetos en un pallet
-- Incluye posiciones, rotaciones y metadatos
-- Puede guardarse y cargarse
+**Columna (Column)**
+- En el contexto de empaquetado: apilamiento vertical de cajas del mismo tipo sobre la base del palet.
+- Ej: "en la base caben 4 cajas → 4 columnas, cada una de un tipo".
+- Ver → ColumnPackingStrategy.
 
-**Contenedor (Container)**
-- En este contexto, sinónimo de Pallet
-- Evitar usar para no confundir con contenedores de transporte
+**Componentes Granulares (Granular Components)**
+- Los componentes React primitivos que exporta la librería: `<Box />`, `<Pallet />`, `<Separator />`, etc.
+- Usados para componer escenas personalizadas.
 
 ### D
 
-**Densidad (Density)**
-- Relación peso/volumen de un objeto
-- Afecta cálculos de estabilidad
-- `densidad = peso / volumen`
-
-**Dimensiones (Dimensions)**
-- Medidas espaciales de un objeto o pallet
-- Expresadas como: ancho (width), alto (height), profundidad (depth)
-- También: largo, ancho, alto (length, width, height)
-
-**Domain Event**
-- Evento significativo que ocurre en el dominio
-- Ej: ObjectPlaced, WeightLimitExceeded
-- Usado para comunicación entre componentes
+**Dimensiones (Dimensions3D)**
+- Medidas espaciales: ancho (width, X), alto (height, Y), profundidad (depth, Z).
+- Siempre en milímetros (mm).
 
 ### E
 
-**Entidad (Entity)**
-- Objeto con identidad única
-- Su identidad persiste aunque cambien sus atributos
-- Ej: Pallet, PackableObject
+**Escena (Scene)**
+- Composición completa de un Canvas R3F con iluminación, cámara y decorado.
+- Tres escenas estandarizadas: WarehouseScene, TruckScene, PalletScene.
+
+**Escenas Precompuestas (Pre-composed Scenes)**
+- Los componentes React de alto nivel que exporta la librería y combinan primitivas + cámara + iluminación.
 
 **Estabilidad (Stability)**
-- Medida de qué tan segura es una configuración
-- Afectada por centro de gravedad y distribución de peso
-- Score de 0-100
+- Medida de seguridad de una configuración de carga.
+- Score 0-100, basado en CoG, distribución de peso y soporte.
 
-**Euro Pallet / EUR-Pallet / EPAL**
-- Pallet estándar europeo
-- Dimensiones: 1200mm x 800mm x 144mm
-- Capacidad típica: 1000kg
+**Estancia (Room)**
+- Espacio individual dentro de un almacén.
+- Definido por un polígono 2D (planta) y una altura de techo.
+- Puede tener forma irregular (L, U, T…).
+
+**Euro Pallet / EPAL**
+- Pallet estándar europeo: 1200 × 800 × 144 mm, 1000 kg.
 
 ### F
 
 **Fragilidad (Fragility)**
-- Nivel de resistencia de un objeto a daños
-- Niveles: Very Fragile, Fragile, Normal, Robust, Very Robust
-- Afecta reglas de apilamiento
+- Propiedad de una caja que indica si es frágil y cuánto peso soporta encima.
+- Si `fragile = true` y `fragilityMaxWeight` no definido → nada encima.
 
 ### G
 
-**Geometría (Geometry)**
-- Representación 3D de un objeto
-- En Three.js: BoxGeometry, etc.
-- Define la forma visual
+**Gravedad Simulada (Simulated Gravity)**
+- Regla que impide que los objetos floten.
+- Una caja sin soporte cae hasta encontrar superficie.
+- Ver → BR-004.
 
-**Grid**
-- Rejilla de referencia en escena 3D
-- Ayuda a posicionar objetos
-- Típicamente alineada con plano XZ
+### H
+
+**Hook**
+- Función React que encapsula lógica reutilizable.
+- La librería exporta: `usePhysicsValidation`, `usePalletMetrics`, `usePackingStrategy`.
 
 ### I
 
-**Invariante (Invariant)**
-- Regla que SIEMPRE debe cumplirse
-- Ej: peso total ≤ capacidad máxima
-- Core del modelo de dominio
+**Instancing**
+- Técnica de renderizado Three.js para dibujar muchos objetos idénticos con una sola llamada.
+- Relevante cuando hay muchas cajas del mismo tipo.
 
 ### L
 
-**Layout**
-- Disposición espacial de objetos
-- Puede ser manual o generado automáticamente
-- Sinónimo de Configuration en algunos contextos
-
-**Límite Físico (Physical Boundary)**
-- Restricción espacial del pallet
-- Los objetos no pueden superarlo
-- Definido por dimensiones del pallet
+**Librería (Library)**
+- Naturaleza del proyecto: NO es una aplicación, es un paquete npm consumible.
+- Exporta componentes, hooks, entidades y utilidades.
+- El desarrollador final compone la aplicación con store y UX propia.
 
 ### M
 
-**Material**
-- Tipo de construcción del pallet
-- Tipos: Madera (Wood), Plástico (Plastic), Metal, Composite
-- Afecta peso y capacidad del pallet
-
-**Mesh**
-- Objeto 3D renderizable en Three.js
-- Combina geometría y material
-- Representa visualmente un objeto
+**Metadatos (Metadata)**
+- `Record<string, unknown>` presente en todas las entidades.
+- El desarrollador inyecta datos de negocio: producto, lote, caducidad, proveedor, etc.
+- La librería NO filtra ni busca en metadatos; solo los almacena y expone.
 
 ### O
 
-**Objeto Empaquetable (Packable Object)**
-- Cualquier ítem que puede colocarse en el pallet
-- Tiene dimensiones, peso, categoría
-- Puede tener restricciones de apilamiento
-
-**Objeto Colocado (Placed Object)**
-- Packable Object que ya tiene posición en el pallet
-- Incluye position, rotation
-- Parte de una configuración
-
-**Optimización (Optimization)**
-- Proceso de encontrar mejor disposición
-- Criterios: maximizar espacio, minimizar espacio vacío
-- Usa algoritmos de bin packing
+**Operario (Operator)**
+- Usuario final de la aplicación construida con la librería.
+- Usa la herramienta para visualizar dónde está cada palet/caja y gestionar stock.
 
 ### P
 
-**Pallet**
-- Plataforma para transporte y almacenamiento
-- Base sobre la que se colocan objetos
-- Entidad raíz del dominio
+**Palet (Pallet)**
+- Plataforma para transporte y almacenamiento.
+- Base sobre la que se colocan cajas.
+- Tiene dimensiones, material, peso máximo, peso propio.
 
-**Peso (Weight)**
-- Masa de un objeto en kilogramos (kg)
-- Restricción crítica en validación
-- Se suma para calcular carga total
+**Palet Parcial (Partial Pallet)**
+- Un palet cargado parcialmente.
+- Se puede apilar con separador encima de otro palet para optimizar espacio en camión cuando los pedidos son pequeños.
+- Ver → StackedPallet.
 
-**Posición (Position)**
-- Coordenadas 3D de un objeto
-- Expresadas como [x, y, z] o {x, y, z}
-- Relativas al centro del pallet (típicamente)
+**Palet Posicionado (PlacedPallet)**
+- StackedPallet ya colocado en una estancia o camión con posición XZ y rotación Y.
+
+**Piso de Palet (PalletFloor)**
+- Un nivel dentro de un StackedPallet: palet + cajas + separador opcional encima.
+
+**PackingStrategy (Estrategia de Empaquetado)**
+- Interfaz adapter que define el contrato `pack(boxes, pallet) → PlacementResult`.
+- Se intercambia en runtime.
+- Implementaciones incluidas: ColumnPackingStrategy, TypeGroupPackingStrategy, BinPacking3DStrategy.
+
+**Polígono (Polygon)**
+- Forma 2D que define la planta de una estancia.
+- Array de Point2D. Mínimo 3 vértices.
+- Admite formas convexas y cóncavas.
+
+**Posición (Position3D)**
+- Coordenadas 3D `{ x, y, z }` en mm.
+- x: ancho, y: vertical, z: profundidad.
 
 ### R
 
 **R3F (React Three Fiber)**
-- React renderer para Three.js
-- Permite usar Three.js declarativamente
-- Core de nuestra visualización 3D
+- React renderer para Three.js.
+- Base de la visualización 3D de la librería.
 
-**Restricción (Constraint)**
-- Limitación o regla que debe cumplirse
-- Ej: peso máximo, altura máxima
-- Validadas antes de aplicar cambios
-
-**Rotación (Rotation)**
-- Orientación de un objeto en 3D
-- Expresada en grados o radianes
-- Ejes: X (pitch), Y (yaw), Z (roll)
+**Rotación Discreta (Discrete Rotation)**
+- Rotación limitada a 0°, 90°, 180°, 270° por eje.
+- Las cajas y palets solo se rotan en incrementos de 90°.
 
 ### S
 
+**Separador (Separator)**
+- Plano rígido (cartón, madera, plástico) que se coloca entre pisos de palet.
+- Tiene grosor, dimensiones y peso propio.
+- Obligatorio entre pisos de un StackedPallet (BR-302).
+
 **SKU (Stock Keeping Unit)**
-- Código único de identificación de producto
-- Opcional en PackableObject
-- Usado para integración con sistemas externos
+- Código único de producto en una caja.
+- Campo fijo (no metadata) para facilitar agrupaciones y algoritmos.
 
-**Soporte (Support)**
-- Objeto o superficie debajo que sostiene otro objeto
-- Necesario para validación física
-- Un objeto debe estar en base O tener soporte
-
-**Stacking Rules**
-- Reglas de apilamiento de objetos
-- Define qué puede apilarse sobre qué
-- Incluye peso máximo soportable
+**StackedPallet (Palet Apilado)**
+- Composición de 1+ pisos de palet con separadores intermedios.
+- Todos los pisos comparten dimensiones de planta.
+- El límite de altura lo dicta el contenedor (estancia o camión).
 
 **Stability Score**
-- Puntuación de estabilidad (0-100)
-- 100 = perfectamente estable
-- < 50 = inestable, requiere atención
+- Puntuación 0-100 de estabilidad de un palet cargado.
+- ≥ 70 = bueno, 50-70 = warning, < 50 = inestable (error).
 
 ### T
 
-**Three.js**
-- Librería JavaScript para gráficos 3D WebGL
-- Base de nuestra visualización
-- Usada a través de React Three Fiber
+**Truck (Camión)**
+- Ver → Camión.
 
-**Transformación (Transformation)**
-- Cambio de posición, rotación o escala
-- Matriz 4x4 en gráficos 3D
-- Aplicada a objetos para posicionarlos
+**TruckType (Tipo de Camión)**
+- Enum: BOX, REFRIGERATED, FLATBED, TAUTLINER, CUSTOM.
+- Cada tipo tiene dimensiones y peso máximo predefinidos.
 
 ### U
 
 **Utilización (Utilization)**
-- Porcentaje de espacio usado
-- `utilización = volumen_usado / volumen_total * 100`
-- Métrica clave de eficiencia
+- Porcentaje de volumen/peso usado respecto al disponible.
+- Métrica clave de eficiencia en PackingMetrics.
 
 ### V
 
 **Validación (Validation)**
-- Proceso de verificar reglas de negocio
-- Retorna lista de errores/advertencias
-- Ejecutada antes de confirmar cambios
+- Proceso de comprobar reglas de negocio.
+- Retorna `ValidationResult` con violations tipadas (code, severity, message).
 
 **Value Object**
-- Objeto sin identidad, definido por sus valores
-- Inmutable
-- Ej: Dimensions, Position, Weight
+- Objeto sin identidad, definido por sus valores, inmutable.
+- Ej: Dimensions3D, Position3D, BoundingBox.
 
-**Vector3**
-- Vector tridimensional (x, y, z)
-- Usado para posiciones, direcciones, escalas
-- Clase de Three.js
-
-**Viewport**
-- Área visible de la escena 3D
-- Donde se renderiza el Canvas
-- Usuario interactúa con él
-
-**Volumen (Volume)**
-- Espacio ocupado por un objeto
-- `volumen = ancho × alto × profundidad`
-- Medido en unidades cúbicas
+**Violation**
+- Una infracción de regla de negocio detectada.
+- Tiene code, severity (error|warning) y message.
 
 ### W
 
-**WebGL (Web Graphics Library)**
-- API de JavaScript para renderizar gráficos 3D
-- Usado por Three.js internamente
-- Acceleration por GPU
+**Warehouse (Almacén)**
+- Aggregate root que contiene estancias (Room[]).
+- Ver → Almacén.
 
-**Weight Limit**
-- Peso máximo permitido
-- Puede ser del pallet o de un objeto (para apilar)
-- Invariante crítica
+**WarehouseScene**
+- Escena precompuesta que renderiza un almacén con estancias navegables.
 
-## 🔤 Acrónimos
+---
+
+## Acrónimos
 
 | Acrónimo | Significado | Contexto |
 |----------|-------------|----------|
 | AABB | Axis-Aligned Bounding Box | Colisiones |
 | ADR | Architecture Decision Record | Documentación |
-| API | Application Programming Interface | General |
 | CoG | Center of Gravity | Física |
 | DDD | Domain-Driven Design | Arquitectura |
 | EPAL | European Pallet Association | Estándares |
-| EUR | European (pallet) | Estándares |
-| HMR | Hot Module Replacement | Desarrollo |
+| ESM | ECMAScript Modules | Build |
 | R3F | React Three Fiber | Framework 3D |
 | SKU | Stock Keeping Unit | Inventario |
-| UI | User Interface | Interfaz |
-| UX | User Experience | Experiencia |
-| WCAG | Web Content Accessibility Guidelines | Accesibilidad |
 
-## 📏 Unidades de Medida
+---
 
-### Dimensiones
-- **Milímetros (mm)**: Sistema métrico, usado por EUR pallets
-- **Metros (m)**: Para cálculos a mayor escala
-- **Pulgadas (in)**: Sistema imperial, usado en pallets americanos
-- **Pies (ft)**: Altura máxima común (ej: 7 ft)
+## Unidades de Medida
 
-### Peso
-- **Kilogramos (kg)**: Unidad principal del sistema
-- **Gramos (g)**: Para objetos pequeños
-- **Toneladas (t)**: Para capacidades grandes
-- **Libras (lb)**: Sistema imperial (1 lb ≈ 0.453 kg)
+| Magnitud | Unidad | Notas |
+|----------|--------|-------|
+| Dimensiones | mm (milímetros) | Toda la API usa mm |
+| Peso | kg (kilogramos) | |
+| Rotación | grados (0/90/180/270) | Solo discreta en esta librería |
+| Volumen | mm³ | Derivado de Dimensions3D |
+| Coordenadas 3D | mm | Componentes convierten a metros internamente para Three.js |
 
-### Volumen
-- **Metros cúbicos (m³)**: Volumen de pallet
-- **Centímetros cúbicos (cm³)**: Objetos pequeños
-- **Litros (L)**: Fluidos o capacidad
+---
 
-## 🌍 Estándares de Pallets
-
-### Dimensiones Comunes
+## Estándares de Palets
 
 | Nombre | Dimensiones (mm) | Región | Capacidad típica |
 |--------|------------------|--------|------------------|
-| EUR/EPAL | 1200 × 800 | Europa | 1000 kg |
-| ISO 1 | 1200 × 1000 | ISO | 1200 kg |
-| American | 1219 × 1016 | USA | 1200 kg |
-| Asia | 1100 × 1100 | Asia | 1000 kg |
-| Australia | 1165 × 1165 | Australia | 1000 kg |
+| EUR/EPAL | 1200 × 800 × 144 | Europa | 1000 kg |
+| ISO 1 | 1200 × 1000 × 150 | ISO | 1200 kg |
+| American | 1219 × 1016 × 145 | USA | 1200 kg |
+| Asia | 1100 × 1100 × 150 | Asia | 1000 kg |
 
-## 💬 Frases del Lenguaje Ubicuo
+---
 
-Ejemplos de cómo hablamos del dominio:
+## Lenguaje Ubicuo — Frases Correctas
 
-- ❌ "Añadir un ítem al contenedor"
-- ✅ "Colocar un objeto empaquetable en el pallet"
-
-- ❌ "Chequear si cabe"
-- ✅ "Validar restricciones de carga"
-
-- ❌ "Calcular el centro"
-- ✅ "Calcular el centro de gravedad"
-
-- ❌ "Poner una caja encima"
-- ✅ "Apilar un objeto sobre otro respetando reglas de stacking"
-
-- ❌ "Está muy pesado"
-- ✅ "Excede la capacidad de carga del pallet"
+- ✅ "Colocar una caja en el palet"  — ❌ "Añadir un ítem al contenedor"
+- ✅ "Posicionar un palet en la estancia"  — ❌ "Poner un palet en el almacén"
+- ✅ "Apilar un palet parcial con separador"  — ❌ "Poner un palet encima"
+- ✅ "Ejecutar la estrategia de empaquetado por columnas"  — ❌ "Ordenar las cajas"
+- ✅ "Validar restricciones de carga"  — ❌ "Chequear si cabe"
+- ✅ "Calcular el centro de gravedad"  — ❌ "Calcular el centro"
+- ✅ "La caja excede el peso máximo del palet"  — ❌ "Está muy pesado"
+- ✅ "El desarrollador registra una estrategia custom"  — ❌ "El usuario añade un algoritmo"
 
 ---
 

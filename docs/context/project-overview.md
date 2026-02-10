@@ -1,114 +1,120 @@
-# Project Overview - Pallet Builder 3D
+# Project Overview — Pallet Builder
 
-> **Propósito**: Este documento proporciona una visión general del proyecto para herramientas de desarrollo asistidas por IA.
+> **Propósito**: Visión general del proyecto para herramientas de IA y nuevos desarrolladores.
 
-## 🎯 Objetivo del Proyecto
+## Qué es Pallet Builder
 
-Pallet Builder 3D es una aplicación web interactiva que permite a los usuarios construir y visualizar configuraciones de pallets en un entorno 3D. El objetivo es proporcionar una herramienta intuitiva para planificar y optimizar la disposición de cargas en pallets.
+Pallet Builder es una **librería npm de componentes React / React Three Fiber** para visualizar y gestionar la carga logística en 3D. **No es una aplicación** — exporta primitivas 3D, escenas precompuestas, entidades de dominio, hooks y funciones de validación que los desarrolladores integran en sus propias apps.
 
-## 🛠️ Stack Tecnológico
+## Problema que resuelve
 
-### Core
-- **React** - Framework de UI
-- **TypeScript** - Lenguaje de programación
-- **Vite** - Build tool y dev server
+En logística de almacenamiento y transporte, planificar la disposición de mercancía sobre palets, dentro de camiones y en estancias de almacén requiere:
 
-### 3D & Visualización
-- **Three.js** - Librería 3D
-- **@react-three/fiber** - React renderer para Three.js
-- **@react-three/drei** - Helpers y abstracciones para R3F
+- Validar restricciones físicas (colisiones, peso, estabilidad).
+- Optimizar el uso del volumen disponible.
+- Visualizar la configuración antes de la carga física.
 
-### Herramientas de Desarrollo
-- **ESLint** - Linting
-- **pnpm** - Package manager
+Pallet Builder proporciona los **building blocks 3D** para construir estas herramientas.
 
-## 🏗️ Arquitectura de Alto Nivel
+## Tres espacios de visualización
+
+| Espacio | Descripción |
+|---------|-------------|
+| **Almacén (Warehouse)** | Conjunto de estancias (rooms) con planta poligonal irregular y techo. Se colocan palets apilados en el suelo. |
+| **Camión (Truck)** | Contenedor rectangular con presets por tipo (caja seca, refrigerado, plataforma, cortina). Se colocan palets dentro. |
+| **Palet (Pallet)** | Unidad individual con cajas empaquetadas en pisos, separadores opcionales y apilamiento de palets. |
+
+## Stack Tecnológico
+
+| Categoría | Tecnología |
+|-----------|-----------|
+| Lenguaje | TypeScript 5+ (strict mode) |
+| UI / Rendering | React 18+, React Three Fiber, @react-three/drei |
+| 3D Engine | Three.js |
+| Build tool | Vite (modo library) |
+| Test runner | Vitest |
+| Package manager | pnpm |
+| Linter | ESLint (flat config) |
+
+## Arquitectura de Alto Nivel
 
 ```
-┌─────────────────────────────────────┐
-│         React Application           │
-│  ┌───────────────────────────────┐  │
-│  │   React Three Fiber (R3F)    │  │
-│  │  ┌─────────────────────────┐ │  │
-│  │  │      Three.js Scene     │ │  │
-│  │  │  - Pallet Models        │ │  │
-│  │  │  - Camera Controls      │ │  │
-│  │  │  - Lights & Materials   │ │  │
-│  │  └─────────────────────────┘ │  │
-│  └───────────────────────────────┘  │
-│                                     │
-│  ┌───────────────────────────────┐  │
-│  │   State Management Layer     │  │
-│  │  - Pallet Configuration      │  │
-│  │  - Object Placement          │  │
-│  │  - User Interactions         │  │
-│  └───────────────────────────────┘  │
-└─────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│                    Aplicación del consumidor              │
+│         (store propio, UI propia, flujos propios)         │
+└────────────────────────┬─────────────────────────────────┘
+                         │  props / callbacks
+                         ▼
+┌──────────────────────────────────────────────────────────┐
+│               Scenes (Escenas precompuestas)              │
+│     WarehouseScene · TruckScene · PalletScene             │
+└────────────────────────┬─────────────────────────────────┘
+                         │  compone
+                         ▼
+┌──────────────────────────────────────────────────────────┐
+│          Components (Primitivas 3D + Environments)        │
+│  <Box/> <Pallet/> <StackedPallet/> <Separator/> <Label/> │
+│  <WarehouseEnvironment/> <TruckEnvironment/>              │
+└────────────────────────┬─────────────────────────────────┘
+                         │  usa
+                         ▼
+┌──────────────────────────────────────────────────────────┐
+│                        Hooks                              │
+│  usePhysicsValidation · usePalletMetrics                  │
+│  usePackingStrategy                                       │
+└────────────────────────┬─────────────────────────────────┘
+                         │  invoca
+                         ▼
+┌──────────────────────────────────────────────────────────┐
+│              Core (TypeScript puro)                        │
+│  entities/ · validation/ · packing/ · factories/          │
+│  SIN React · SIN Three.js · Testeable en Node             │
+└──────────────────────────────────────────────────────────┘
 ```
 
-## 🎨 Características Principales
+## Principios de diseño
 
-1. **Visualización 3D Interactiva**
-   - Manipulación de objetos en tiempo real
-   - Vista isométrica y perspectiva
-   - Controles de cámara intuitivos
+1. **Library, not app** — Solo exporta bloques reutilizables. `App.tsx` es una demo.
+2. **Controlled components** — Sin estado interno; todo llega por props, todo sale por callbacks.
+3. **Core puro** — La lógica de dominio no depende de React ni Three.js.
+4. **Adapter pattern** — Los algoritmos de empaquetado son intercambiables y extensibles.
+5. **No incluye state management** — El consumidor elige su solución (Zustand, Redux, Context…).
 
-2. **Constructor de Pallets**
-   - Añadir/eliminar objetos
-   - Configuración de dimensiones
-   - Validación de restricciones
-
-3. **Optimización de Espacio**
-   - Cálculos de carga
-   - Sugerencias de disposición
-   - Exportación de configuraciones
-
-## 📦 Estructura del Proyecto
+## Estructura del proyecto
 
 ```
 pallet-builder/
 ├── src/
-│   ├── components/     # Componentes React
-│   ├── hooks/          # Custom hooks
-│   ├── utils/          # Utilidades y helpers
-│   ├── types/          # Definiciones TypeScript
-│   ├── scenes/         # Escenas 3D
-│   └── assets/         # Recursos estáticos
-├── public/             # Archivos públicos
-└── docs/               # Documentación
+│   ├── core/              # Entidades, validación, packing, factories
+│   ├── components/        # Primitives, environments, controls, scenes
+│   ├── hooks/             # Custom hooks React
+│   ├── lib.ts             # Entry point librería (exports públicos)
+│   ├── App.tsx            # Demo / playground (NO se publica)
+│   └── main.tsx           # Bootstrap demo
+├── docs/                  # Documentación completa
+├── public/                # Assets de la demo
+├── vite.config.ts         # Configuración Vite (modo lib)
+└── package.json
 ```
 
-## 🎯 Casos de Uso
+## Público objetivo
 
-1. **Planificación Logística**: Empresas que necesitan optimizar la carga de mercancías
-2. **Educación**: Estudiantes aprendiendo sobre logística y optimización espacial
-3. **Visualización**: Visualizar configuraciones antes de la carga física
+- **Desarrolladores frontend** que construyen herramientas logísticas.
+- **Equipos de producto** en empresas de transporte, almacenaje y 3PL.
+- **Integradores** que necesitan visualización 3D de carga en sus plataformas.
 
-## 🔄 Flujo de Trabajo Típico
+## Estado actual
 
-1. Usuario abre la aplicación
-2. Selecciona dimensiones del pallet
-3. Añade objetos con sus dimensiones
-4. Posiciona objetos en el espacio 3D
-5. Valida la configuración
-6. Exporta o guarda la configuración
+**Versión**: 0.1.0 (desarrollo inicial)
 
-## 🚀 Estado Actual
+Se ha completado la fase de análisis de requisitos y diseño de arquitectura. La documentación está lista y la implementación del código comienza a continuación.
 
-**Version**: 0.1.0 (Desarrollo Inicial)
-**Fase**: Setup del proyecto y configuración base
+## Documentación relacionada
 
-### Próximos Hitos
-- [ ] Implementar escena 3D básica
-- [ ] Crear componentes de UI principales
-- [ ] Añadir sistema de estado
-- [ ] Implementar controles de interacción 3D
-
-## 📝 Notas para IA
-
-Este proyecto está en fase inicial. Al generar código:
-- Prioriza TypeScript estricto
-- Usa componentes funcionales de React
-- Sigue las convenciones de react-three-fiber
-- Mantén la separación de responsabilidades
-- Documenta funciones complejas
+- [Arquitectura](../architecture/ARCHITECTURE.md)
+- [Requisitos funcionales](../domain/requirements.md)
+- [Entidades de dominio](../domain/entities.md)
+- [Reglas de negocio](../domain/business-rules.md)
+- [Glosario](../domain/glossary.md)
+- [Tech Stack](tech-stack.md)
+- [Coding Conventions](coding-conventions.md)

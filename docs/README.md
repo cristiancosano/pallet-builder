@@ -1,52 +1,34 @@
-# Documentación - Pallet Builder 3D
+# Documentación — Pallet Builder
 
-Bienvenido a la documentación del proyecto Pallet Builder 3D, un sistema de construcción de pallets en 3D utilizando Three.js con la librería react-three-fiber.
+Pallet Builder es una **librería npm de componentes React/R3F** para visualizar y gestionar carga logística en 3D (almacenes, camiones, palets).
 
-## 📁 Estructura de Documentación
+## Estructura de la documentación
 
-### 📐 [architecture/](./architecture)
-Decisiones de arquitectura y registros de decisiones arquitectónicas (ADRs). Documenta las decisiones técnicas importantes y el razonamiento detrás de ellas.
+| Carpeta | Contenido |
+|---------|-----------|
+| [architecture/](./architecture) | Arquitectura técnica, patrones, ADRs |
+| [domain/](./domain) | Entidades, reglas de negocio, requisitos, glosario |
+| [context/](./context) | Project overview, tech stack, coding conventions, domain model |
+| [guides/](./guides) | Guías de desarrollo 3D, personalización, contribución |
+| [api/](./api) | Referencia de API (componentes, hooks, funciones) |
+| [examples/](./examples) | Ejemplos de uso y patrones comunes |
+| [design/](./design) | Decisiones de diseño visual y UX |
+| [setup/](./setup) | Instalación y configuración del entorno |
 
-### 🏢 [domain/](./domain)
-Modelo de dominio del negocio: entidades, reglas de negocio, glosario y lenguaje ubicuo. Documentación del core del sistema basada en Domain-Driven Design.
+## Inicio rápido
 
-### 📚 [guides/](./guides)
-Guías de desarrollo, contribución y mejores prácticas. Incluye tutoriales paso a paso y documentación para desarrolladores.
+1. [Project Overview](./context/project-overview.md) — Qué es, para quién, cómo funciona.
+2. [Requisitos funcionales](./domain/requirements.md) — Las 34 funcionalidades especificadas.
+3. [Arquitectura](./architecture/ARCHITECTURE.md) — Capas, patrones, estructura de carpetas.
+4. [Plan de implementación](./implementation-plan.md) — Fases, dependencias, estimaciones.
+5. [Entidades de dominio](./domain/entities.md) — Interfaces TypeScript de todas las entidades.
 
-### 🔌 [api/](./api)
-Documentación de componentes, hooks personalizados, y API del proyecto. Referencia técnica detallada.
+## Para herramientas de IA
 
-### 💡 [examples/](./examples)
-Ejemplos de uso, casos de implementación y patrones comunes. Código de ejemplo y casos de uso reales.
-
-### 🎨 [design/](./design)
-Decisiones de diseño, patrones UI/UX, y sistema de diseño. Incluye especificaciones visuales y de interacción.
-
-### ⚙️ [setup/](./setup)
-Guías de instalación, configuración del entorno de desarrollo y despliegue.
-
-### 🤖 [context/](./context)
-Contexto del proyecto para herramientas de IA. Información estructurada para asistentes de desarrollo basados en IA.
-
-## 🚀 Inicio Rápido
-
-Si eres nuevo en el proyecto:
-
-1. Lee el [Project Overview](./context/project-overview.md)
-2. Comprende el [Modelo de Dominio](./domain/README.md)
-3. Revisa las [Convenciones de Código](./context/coding-conventions.md)
-4. Consulta la [Guía de Configuración](./setup/README.md)
-5. Explora los [Ejemplos](./examples/README.md)
-
-## 🤖 Para Herramientas de IA
-
-Si eres una IA trabajando en este proyecto:
-
-1. **Dominio**: Lee [domain-model.md](./context/domain-model.md) para comprender las reglas de negocio
-2. **Stack**: Consulta [tech-stack.md](./context/tech-stack.md) para conocer las tecnologías
-3. **Convenciones**: Sigue [coding-conventions.md](./context/coding-conventions.md) al generar código
-4. **Arquitectura**: Revisa los [ADRs](./architecture/README.md) para entender decisiones técnicas
-
-## 🤝 Contribuir a la Documentación
+1. Lee [domain-model.md](./context/domain-model.md) para comprender entidades y reglas.
+2. Consulta [tech-stack.md](./context/tech-stack.md) para conocer las tecnologías.
+3. Sigue [coding-conventions.md](./context/coding-conventions.md) al generar código.
+4. Revisa [ARCHITECTURE.md](./architecture/ARCHITECTURE.md) para la estructura de capas.
+5. Usa el [glosario](./domain/glossary.md) como lenguaje ubicuo.
 
 La documentación es un componente vital del proyecto. Si encuentras algo confuso o desactualizado, por favor abre un issue o envía un pull request.

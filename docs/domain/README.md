@@ -1,28 +1,17 @@
-# Modelo de Dominio - Pallet Builder 3D
+# Dominio — Pallet Builder
 
-Esta carpeta contiene la documentación del modelo de dominio del proyecto, definiendo los conceptos del negocio, entidades, reglas y lenguaje ubicuo.
+Documentación del modelo de dominio: entidades, reglas de negocio, requisitos y lenguaje ubicuo.
 
-## 📚 Contenido
+## Contenido
 
-### [entities.md](./entities.md)
-Entidades principales del dominio:
-- Pallet
-- PackableObject (Objeto empaquetable)
-- Configuration
-- Placement (Colocación)
-
-### [business-rules.md](./business-rules.md)
-Reglas de negocio y restricciones:
-- Validaciones de peso y volumen
-- Restricciones de apilamiento
-- Reglas de estabilidad
-- Límites físicos
-
-### [glossary.md](./glossary.md)
-Glosario de términos del dominio:
-- Lenguaje ubicuo (Ubiquitous Language)
-- Términos técnicos
-- Acrónimos y abreviaciones
+| Documento | Descripción |
+|-----------|-------------|
+| [requirements.md](./requirements.md) | 34 requisitos funcionales + 8 no funcionales organizados en 10 áreas |
+| [entities.md](./entities.md) | 11 entidades de dominio con interfaces TypeScript (Warehouse, Room, Truck, Pallet, Box, StackedPallet, etc.) |
+| [business-rules.md](./business-rules.md) | ~20 reglas de negocio con severidades (error/warning) en 6 categorías |
+| [glossary.md](./glossary.md) | Glosario de lenguaje ubicuo — términos obligatorios al generar código |
+- Restricciones técnicas
+- Dependencias del sistema
 
 ### [value-objects.md](./value-objects.md)
 Value Objects del dominio:
