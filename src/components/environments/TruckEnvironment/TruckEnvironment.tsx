@@ -64,25 +64,27 @@ export const TruckEnvironment = memo<TruckEnvironmentProps>(function TruckEnviro
   // ── Dimensiones derivadas ──
   const wallThickness = 0.05
   const floorThickness = 0.08
-  const chassisH = 0.35               // altura del bastidor bajo el remolque
-  const chassisDropY = -chassisH       // posición Y del chasis
+  const wheelRadius = 0.28
+  const wheelWidth = 0.18
+  const groundClearance = 0.15        // distancia del suelo a la parte inferior del chasis
+  const chassisH = 0.25               // altura del bastidor
+  const wheelY = wheelRadius + groundClearance  // ruedas apoyadas con clearance
+  const chassisY = wheelY + wheelRadius + 0.1  // chasis sobre las ruedas
+  const remolqueFloorY = chassisY + chassisH / 2 + floorThickness / 2  // remolque sobre el chasis
+  
   const cabW = tw + wallThickness * 2  // la cabina tiene el mismo ancho exterior
   const cabD = tw * 0.65              // profundidad de la cabina
   const cabH = th * 0.85              // altura de la cabina
   const cabGap = 0.15                 // separación entre cabina y remolque
   const cabZ = td + wallThickness + cabGap // posición Z de la cabina
-
-  // Dimensiones de rueda
-  const wheelRadius = 0.28
-  const wheelWidth = 0.18
-  const wheelY = chassisDropY - chassisH / 2 + wheelRadius * 0.3
+  const cabFloorY = remolqueFloorY    // cabina al mismo nivel que el remolque
 
   // Grid rectangular personalizado para el remolque
   const gridGeometry = useMemo(() => {
     if (!resolvedShowGrid) return null
     
     const spacing = 0.5  // 500mm
-    const y = 0.002
+    const y = remolqueFloorY + 0.002
     const positions: number[] = []
     
     // Líneas verticales (eje X)
@@ -98,7 +100,7 @@ export const TruckEnvironment = memo<TruckEnvironmentProps>(function TruckEnviro
     const geo = new THREE.BufferGeometry()
     geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
     return geo
-  }, [resolvedShowGrid, tw, td])
+  }, [resolvedShowGrid, tw, td, remolqueFloorY])
 
   const solidWallMaterial = useMemo(
     () => (
@@ -119,7 +121,7 @@ export const TruckEnvironment = memo<TruckEnvironmentProps>(function TruckEnviro
 
       {/* Suelo del remolque */}
       <mesh
-        position={[tw / 2, 0, td / 2]}
+        position={[tw / 2, remolqueFloorY, td / 2]}
         rotation={[-Math.PI / 2, 0, 0]}
         receiveShadow
       >
@@ -128,31 +130,31 @@ export const TruckEnvironment = memo<TruckEnvironmentProps>(function TruckEnviro
       </mesh>
 
       {/* Grosor del suelo (cuerpo visible) */}
-      <mesh position={[tw / 2, -floorThickness / 2, td / 2]} castShadow receiveShadow>
+      <mesh position={[tw / 2, remolqueFloorY - floorThickness / 2, td / 2]} castShadow receiveShadow>
         <boxGeometry args={[tw + wallThickness * 2, floorThickness, td + wallThickness]} />
         <meshStandardMaterial color={truckStyle.floorColor} roughness={0.85} metalness={0.1} />
       </mesh>
 
       {/* Pared izquierda */}
-      <mesh position={[-wallThickness / 2, th / 2, td / 2]} castShadow>
+      <mesh position={[-wallThickness / 2, remolqueFloorY + th / 2, td / 2]} castShadow>
         <boxGeometry args={[wallThickness, th, td + wallThickness]} />
         {solidWallMaterial}
       </mesh>
 
       {/* Pared derecha */}
-      <mesh position={[tw + wallThickness / 2, th / 2, td / 2]} castShadow>
+      <mesh position={[tw + wallThickness / 2, remolqueFloorY + th / 2, td / 2]} castShadow>
         <boxGeometry args={[wallThickness, th, td + wallThickness]} />
         {solidWallMaterial}
       </mesh>
 
       {/* Pared trasera (fondo del remolque — lado cabina) */}
-      <mesh position={[tw / 2, th / 2, td + wallThickness / 2]} castShadow>
+      <mesh position={[tw / 2, remolqueFloorY + th / 2, td + wallThickness / 2]} castShadow>
         <boxGeometry args={[tw + wallThickness * 2, th, wallThickness]} />
         {solidWallMaterial}
       </mesh>
 
       {/* Techo del remolque */}
-      <mesh position={[tw / 2, th, td / 2]} castShadow>
+      <mesh position={[tw / 2, remolqueFloorY + th, td / 2]} castShadow>
         <boxGeometry args={[tw + wallThickness * 2, wallThickness, td + wallThickness]} />
         {solidWallMaterial}
       </mesh>
@@ -174,18 +176,18 @@ export const TruckEnvironment = memo<TruckEnvironmentProps>(function TruckEnviro
        * ═══════════════════════════════════════════════════════ */}
 
       {/* Largueros del chasis (dos vigas longitudinales) */}
-      <mesh position={[tw * 0.25, chassisDropY, td / 2]} castShadow>
-        <boxGeometry args={[0.12, chassisH, td + cabD + cabGap + 0.5]} />
+      <mesh position={[tw * 0.25, chassisY, (td + cabD + cabGap) / 2]} castShadow>
+        <boxGeometry args={[0.12, chassisH, td + cabD + cabGap]} />
         <meshStandardMaterial color={truckStyle.chassisColor} roughness={0.7} metalness={0.5} />
       </mesh>
-      <mesh position={[tw * 0.75, chassisDropY, td / 2]} castShadow>
-        <boxGeometry args={[0.12, chassisH, td + cabD + cabGap + 0.5]} />
+      <mesh position={[tw * 0.75, chassisY, (td + cabD + cabGap) / 2]} castShadow>
+        <boxGeometry args={[0.12, chassisH, td + cabD + cabGap]} />
         <meshStandardMaterial color={truckStyle.chassisColor} roughness={0.7} metalness={0.5} />
       </mesh>
 
       {/* Travesaños */}
       {[0.15, 0.35, 0.55, 0.75, 0.95].map((frac) => (
-        <mesh key={frac} position={[tw / 2, chassisDropY, td * frac]} castShadow>
+        <mesh key={frac} position={[tw / 2, chassisY, td * frac]} castShadow>
           <boxGeometry args={[tw * 0.6, 0.06, 0.06]} />
           <meshStandardMaterial color={truckStyle.chassisColor} roughness={0.7} metalness={0.5} />
         </mesh>
@@ -208,7 +210,7 @@ export const TruckEnvironment = memo<TruckEnvironmentProps>(function TruckEnviro
       {/* ═══════════════════════════════════════════════════════
        *   CABINA
        * ═══════════════════════════════════════════════════════ */}
-      <group position={[tw / 2, 0, cabZ]}>
+      <group position={[tw / 2, cabFloorY, cabZ]}>
         {/* Cuerpo principal de la cabina */}
         <mesh position={[0, cabH / 2, cabD / 2]} castShadow receiveShadow>
           <boxGeometry args={[cabW, cabH, cabD]} />
@@ -308,11 +310,11 @@ export const TruckEnvironment = memo<TruckEnvironmentProps>(function TruckEnviro
       {/* ═══════════════════════════════════════════════════════
        *   LUCES TRASERAS (puerta del remolque)
        * ═══════════════════════════════════════════════════════ */}
-      <mesh position={[-wallThickness / 2 + 0.01, th * 0.3, -0.01]}>
+      <mesh position={[-wallThickness / 2 + 0.01, remolqueFloorY + th * 0.3, -0.01]}>
         <boxGeometry args={[0.08, 0.12, 0.02]} />
         <meshStandardMaterial color="#ff3333" emissive="#ff0000" emissiveIntensity={0.3} />
       </mesh>
-      <mesh position={[tw + wallThickness / 2 - 0.01, th * 0.3, -0.01]}>
+      <mesh position={[tw + wallThickness / 2 - 0.01, remolqueFloorY + th * 0.3, -0.01]}>
         <boxGeometry args={[0.08, 0.12, 0.02]} />
         <meshStandardMaterial color="#ff3333" emissive="#ff0000" emissiveIntensity={0.3} />
       </mesh>
@@ -322,20 +324,22 @@ export const TruckEnvironment = memo<TruckEnvironmentProps>(function TruckEnviro
        * ═══════════════════════════════════════════════════════ */}
       <ambientLight intensity={0.45} />
       <directionalLight
-        position={[tw / 2, th * 1.5, td * 0.8]}
+        position={[tw / 2, remolqueFloorY + th * 1.5, td * 0.8]}
         intensity={0.75}
         castShadow
         shadow-mapSize-width={1024}
         shadow-mapSize-height={1024}
       />
-      <pointLight position={[tw / 2, th * 0.7, td / 2]} intensity={0.35} />
+      <pointLight position={[tw / 2, remolqueFloorY + th * 0.7, td / 2]} intensity={0.35} />
       {/* Luz interior (dentro del remolque) */}
-      <pointLight position={[tw / 2, th * 0.9, td * 0.3]} intensity={0.25} />
+      <pointLight position={[tw / 2, remolqueFloorY + th * 0.9, td * 0.3]} intensity={0.25} />
 
       {/* ═══════════════════════════════════════════════════════
-       *   CONTENIDO (palets)
+       *   CONTENIDO (palets) - elevados al nivel del suelo del remolque
        * ═══════════════════════════════════════════════════════ */}
-      {children}
+      <group position={[0, remolqueFloorY, 0]}>
+        {children}
+      </group>
     </group>
   )
 })
