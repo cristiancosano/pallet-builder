@@ -246,6 +246,47 @@ const shippingStatus = {
 
 ## Notas Técnicas
 
+### Señalización de Selección y Highlight
+
+La selección y el highlight de cajas se realizan mediante **bordes de color**, no mediante cambio de color del material. Esto permite que el color/textura original de la caja se mantenga siempre visible.
+
+- **Selección**: borde rojo por defecto (`#ff0000`), personalizable vía prop `selectedColor`.
+- **Highlight (hover)**: borde azul por defecto (`#42a5f5`), personalizable vía prop `highlightedColor`.
+
+```tsx
+<BoxComponent
+  placedBox={box}
+  selected={selectedBoxId === box.id}
+  highlighted={hoveredBoxId === box.id}
+  selectedColor="#e91e63"     // Rosa en lugar de rojo
+  highlightedColor="#00e676"  // Verde en lugar de azul
+/>
+```
+
+### Selección Scoped en Escenas Multi-palet
+
+Cuando varios `PlacedPallet` comparten el mismo `StackedPallet` (por ejemplo, en un almacén con palets idénticos), los IDs de las cajas serían duplicados. Para resolver esto, `StackedPalletComponent` acepta un prop `palletId` que cualifica los IDs automáticamente:
+
+```tsx
+// Los IDs emitidos serán "wp-1:heavy-0", "wp-1:heavy-1", etc.
+<StackedPalletComponent
+  palletId="wp-1"
+  stackedPallet={sharedPallet}
+  selectedBoxId={selectedBoxId}
+  onBoxClick={handleBoxClick}
+/>
+
+// Los IDs emitidos serán "wp-2:heavy-0", "wp-2:heavy-1", etc.
+<StackedPalletComponent
+  palletId="wp-2"
+  stackedPallet={sharedPallet}
+  selectedBoxId={selectedBoxId}
+  onBoxClick={handleBoxClick}
+/>
+```
+
+En `<WarehouseScene />` y `<TruckScene />`, el `palletId` se asigna automáticamente desde `PlacedPallet.id`. En `<PalletScene />` no es necesario (solo hay un palet).
+
 ### Texturas
 
 - Las texturas se cargan mediante `useTexture` de `@react-three/drei`

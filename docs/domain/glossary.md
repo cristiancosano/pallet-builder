@@ -48,6 +48,11 @@ Diccionario de términos utilizados en el proyecto. Este es nuestro **Lenguaje U
 
 **Caja Colocada (PlacedBox)**
 - Una Box ya posicionada en un palet con coordenadas XYZ y rotación.
+
+**Cualificación de IDs (Scoped Selection)**
+- En escenas multi-palet, los IDs de cajas se cualifican con el ID del palet contenedor (`palletId:boxId`) para garantizar unicidad.
+- Evita selecciones cruzadas cuando varios palets comparten la misma referencia de `StackedPallet`.
+- Se activa automáticamente vía el prop `palletId` en `StackedPalletComponent`.
 - Registra relaciones de soporte (qué hay encima/debajo).
 
 **Camión (Truck)**

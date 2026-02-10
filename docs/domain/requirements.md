@@ -261,22 +261,29 @@
   - Anti-aliasing.
 
 #### RF-025: Configuración de Aspecto Visual
-- **Prioridad**: Media
-- **Descripción**: Los elementos 3D permiten personalización visual.
+- **Prioridad**: Alta
+- **Descripción**: Todos los elementos 3D (cajas, palets, separadores, escenas) deben permitir personalización visual completa. La librería proporciona estilos por defecto atractivos (texturas, modelos GLB, HDR) pero el desarrollador puede sobreescribirlos en cualquier nivel.
 - **Criterios de Aceptación**:
-  - Cajas: color, textura, modelo 3D custom.
-  - Palets: color, material visual.
-  - Escena almacén: textura de suelo y paredes configurable.
-  - Escena camión: aspecto del camión configurable por tipo.
+  - Cajas: color, textura, modelo 3D custom, opacidad.
+  - Palets: color, textura, modelo 3D custom.
+  - Separadores: color, textura.
+  - Escena almacén: textura de suelo y paredes configurable, iluminación.
+  - Escena camión: aspecto del camión configurable por tipo, texturas internas.
+  - **Señalización de selección**: borde de color configurable (rojo por defecto para selección, azul para highlight). El color del material de la caja NO cambia al seleccionar — solo se añade un borde visible.
+  - **Señalización de errores/validación**: borde de color configurable para objetos con violaciones.
+  - Tres niveles de prioridad: `aspect` prop individual > configuración global vía `ConfigurationProvider` > valores por defecto.
+  - Todos los assets por defecto (texturas, HDR, modelos) se almacenan en `/public` y se cargan bajo demanda.
 
 #### RF-026: Interacción con Elementos 3D
-- **Prioridad**: Media
+- **Prioridad**: Alta
 - **Descripción**: Los elementos 3D responden a eventos del usuario.
 - **Criterios de Aceptación**:
   - Click para seleccionar un elemento (caja, palet).
-  - Hover para resaltar (highlight).
+  - Hover para resaltar (highlight) con borde de color (no cambio de color del material).
   - Callbacks configurables: `onClick`, `onHover`, `onSelect`, `onDeselect`.
   - El desarrollador puede inyectar el comportamiento que necesite ante cada evento.
+  - **Selección scoped**: cuando varios palets comparten el mismo `StackedPallet` (misma referencia), la selección se cualifica automáticamente con el ID del palet contenedor (`palletId:boxId`) para evitar selecciones cruzadas.
+  - El color del borde de selección y highlight es personalizable vía props (`selectedColor`, `highlightedColor`).
 
 #### RF-027: Etiquetado Visual
 - **Prioridad**: Baja
@@ -362,6 +369,16 @@
   - Selector de algoritmo de empaquetado (columnas, tipo, bin packing).
   - Palet parcial: demostrar apilamiento con separador.
   - Métricas visibles (utilización, estabilidad, peso).
+
+#### RF-035: Identidad Única en Escenas Multi-palet
+- **Prioridad**: Alta
+- **Descripción**: En escenas con múltiples palets (Warehouse, Truck), los IDs de cajas deben ser únicos incluso cuando los palets comparten la misma estructura de datos.
+- **Criterios de Aceptación**:
+  - El componente `<StackedPallet />` acepta un prop `palletId` opcional.
+  - Cuando se proporciona `palletId`, los IDs emitidos en callbacks (`onClick`, `onHover`) se cualifican como `palletId:boxId`.
+  - La selección y highlight solo aplican a la caja del palet correcto.
+  - En `<PalletScene />` (palet único) no es necesario pasar `palletId`.
+  - En `<WarehouseScene />` y `<TruckScene />`, el `palletId` se asigna automáticamente desde `PlacedPallet.id`.
 
 ---
 
