@@ -60,6 +60,17 @@ function createSampleBoxes(): Box[] {
         },
       ),
     ),
+    ...Array.from({ length: 6 }, (_, i) =>
+      BoxFactory.create(
+        { width: 400, height: 200, depth: 600 },
+        {
+          id: `standard-${i}`,
+          type: `Standard ${i + 1}`,
+          weight: 15,
+          color: '#8e44ad',
+        },
+      ),
+    ),
     ...Array.from({ length: 4 }, (_, i) =>
       BoxFactory.fragile(
         { width: 250, height: 200, depth: 350 },
@@ -76,7 +87,7 @@ function createSampleBoxes(): Box[] {
 }
 
 /** Helper: create boxes for a specific floor */
-function createFloorBoxes(floorIndex: number, boxType: 'heavy' | 'medium' | 'mixed'): Box[] {
+function createFloorBoxes(floorIndex: number, boxType: 'heavy' | 'medium' | 'mixed' | 'standard'): Box[] {
   const prefix = `f${floorIndex}`
   
   if (boxType === 'heavy') {
@@ -107,9 +118,34 @@ function createFloorBoxes(floorIndex: number, boxType: 'heavy' | 'medium' | 'mix
     )
   }
   
+  if (boxType === 'standard') {
+    return Array.from({ length: 6 }, (_, i) =>
+      BoxFactory.create(
+        { width: 400, height: 200, depth: 600 },
+        {
+          id: `${prefix}-standard-${i}`,
+          type: `Standard ${i + 1}`,
+          weight: 15,
+          color: '#8e44ad',
+        },
+      ),
+    )
+  }
+  
   // mixed
   return [
-    ...Array.from({ length: 3 }, (_, i) =>
+    ...Array.from({ length: 2 }, (_, i) =>
+      BoxFactory.create(
+        { width: 400, height: 200, depth: 600 },
+        {
+          id: `${prefix}-standard-${i}`,
+          type: `Standard ${i + 1}`,
+          weight: 15,
+          color: '#8e44ad',
+        },
+      ),
+    ),
+    ...Array.from({ length: 2 }, (_, i) =>
       BoxFactory.create(
         { width: 350, height: 280, depth: 450 },
         {
@@ -120,7 +156,7 @@ function createFloorBoxes(floorIndex: number, boxType: 'heavy' | 'medium' | 'mix
         },
       ),
     ),
-    ...Array.from({ length: 3 }, (_, i) =>
+    ...Array.from({ length: 2 }, (_, i) =>
       BoxFactory.fragile(
         { width: 250, height: 200, depth: 350 },
         10,
@@ -486,6 +522,39 @@ function App() {
   // Usar la validación apropiada según la tab activa
   const validationResult = activeTab === 'warehouse' ? warehouseValidation : palletValidation
 
+  // Buscar la caja seleccionada en todas las estructuras
+  const selectedBox = useMemo(() => {
+    if (!selectedBoxId) return null
+
+    // Buscar en el pallet actual
+    for (const floor of stackedPallet.floors) {
+      const found = floor.boxes.find(pb => pb.box.id === selectedBoxId)
+      if (found) return found.box
+    }
+
+    // Buscar en los palets del truck
+    for (const pp of truck.pallets) {
+      for (const floor of pp.stackedPallet.floors) {
+        const found = floor.boxes.find(pb => pb.box.id === selectedBoxId)
+        if (found) return found.box
+      }
+    }
+
+    // Buscar en los palets del room
+    for (const pp of room.pallets) {
+      for (const floor of pp.stackedPallet.floors) {
+        const found = floor.boxes.find(pb => pb.box.id === selectedBoxId)
+        if (found) return found.box
+      }
+    }
+
+    // Fallback: buscar en la lista original de cajas
+    const boxInOriginal = boxes.find(b => b.id === selectedBoxId)
+    if (boxInOriginal) return boxInOriginal
+
+    return null
+  }, [selectedBoxId, stackedPallet, truck, room, boxes])
+
   const handleBoxClick = useCallback((id: string) => {
     setSelectedBoxId(prev => (prev === id ? null : id))
   }, [])
@@ -523,6 +592,7 @@ function App() {
               highlightedBoxId={hoveredBoxId}
               showLabels={showLabels}
               cameraPreset={cameraPreset}
+              showMiniMap
               onBoxClick={handleBoxClick}
               onBoxHover={handleBoxHover}
             />
@@ -535,6 +605,7 @@ function App() {
               highlightedBoxId={hoveredBoxId}
               showLabels={showLabels}
               cameraPreset={cameraPreset}
+              showMiniMap
               onBoxClick={handleBoxClick}
               onBoxHover={handleBoxHover}
             />
@@ -547,6 +618,7 @@ function App() {
               highlightedBoxId={hoveredBoxId}
               showLabels={showLabels}
               cameraPreset={cameraPreset}
+              showMiniMap
               onBoxClick={handleBoxClick}
               onBoxHover={handleBoxHover}
             />
@@ -559,7 +631,7 @@ function App() {
           <section className="panel">
             <h3>Cámara</h3>
             <div className="btn-group">
-              {(['perspective', 'top', 'front', 'side'] as CameraPreset[]).map(p => (
+              {(['perspective', 'isometric', 'top', 'front', 'side'] as CameraPreset[]).map(p => (
                 <button
                   key={p}
                   className={cameraPreset === p ? 'active' : ''}
@@ -685,8 +757,35 @@ function App() {
           {selectedBoxId && (
             <section className="panel">
               <h3>Caja seleccionada</h3>
-              <p className="selected-id">{selectedBoxId}</p>
-              <button onClick={() => setSelectedBoxId(null)}>Deseleccionar</button>
+              {selectedBox ? (
+                <>
+                  <dl className="metrics">
+                    <dt>ID</dt>
+                    <dd>{selectedBox.id}</dd>
+                    <dt>Tipo</dt>
+                    <dd>{selectedBox.type || 'Sin especificar'}</dd>
+                    <dt>Dimensiones</dt>
+                    <dd>
+                      {selectedBox.dimensions.width}×{selectedBox.dimensions.depth}×{selectedBox.dimensions.height} mm
+                    </dd>
+                    <dt>Peso</dt>
+                    <dd>{selectedBox.weight} kg</dd>
+                    {selectedBox.isFragile && (
+                      <>
+                        <dt>Frágil</dt>
+                        <dd>⚠️ Sí (max {selectedBox.maxTopWeight || 0} kg)</dd>
+                      </>
+                    )}
+                  </dl>
+                  <button onClick={() => setSelectedBoxId(null)}>Deseleccionar</button>
+                </>
+              ) : (
+                <>
+                  <p className="selected-id">{selectedBoxId}</p>
+                  <p style={{ fontSize: '0.85em', color: '#888' }}>Caja no encontrada</p>
+                  <button onClick={() => setSelectedBoxId(null)}>Deseleccionar</button>
+                </>
+              )}
             </section>
           )}
         </aside>

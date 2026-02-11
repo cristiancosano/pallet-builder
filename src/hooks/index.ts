@@ -13,3 +13,6 @@ export type { UsePackingStrategyReturn } from './usePackingStrategy'
 
 export { useWarehouseValidation } from './useWarehouseValidation'
 export type { WarehouseValidationResult } from './useWarehouseValidation'
+
+export { useCameraPosition } from './useCameraPosition'
+export type { CameraPosition } from './useCameraPosition'

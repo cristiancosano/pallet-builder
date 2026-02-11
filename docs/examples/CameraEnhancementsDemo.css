@@ -1,0 +1,126 @@
+.camera-demo {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  background: #f5f5f5;
+}
+
+.camera-demo__sidebar {
+  width: 320px;
+  background: white;
+  padding: 24px;
+  overflow-y: auto;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.camera-demo__sidebar h2 {
+  margin: 0 0 24px 0;
+  font-size: 24px;
+  color: #333;
+}
+
+.camera-demo__sidebar h3 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.camera-demo__section {
+  margin-bottom: 32px;
+}
+
+.camera-demo__buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.camera-demo__buttons button {
+  padding: 12px 16px;
+  border: 2px solid #e0e0e0;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.camera-demo__buttons button:hover {
+  background: #f5f5f5;
+  border-color: #999;
+}
+
+.camera-demo__buttons button.active {
+  background: #4a90e2;
+  border-color: #4a90e2;
+  color: white;
+}
+
+.camera-demo__section label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+}
+
+.camera-demo__section input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.camera-demo__features,
+.camera-demo__controls {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.camera-demo__features li,
+.camera-demo__controls li {
+  padding: 12px;
+  margin-bottom: 8px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #333;
+  line-height: 1.5;
+}
+
+.camera-demo__features li strong,
+.camera-demo__controls li strong {
+  display: block;
+  color: #4a90e2;
+  margin-bottom: 4px;
+}
+
+.camera-demo__viewport {
+  flex: 1;
+  position: relative;
+  background: #e0e0e0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .camera-demo {
+    flex-direction: column;
+  }
+
+  .camera-demo__sidebar {
+    width: 100%;
+    max-height: 40vh;
+  }
+
+  .camera-demo__viewport {
+    height: 60vh;
+  }
+}
