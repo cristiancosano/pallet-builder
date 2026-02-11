@@ -1,0 +1,5 @@
+export { PalletBuilder } from './views/PalletBuilder'
+export { WarehouseViewer } from './views/WarehouseViewer'
+export { TruckViewer } from './views/TruckViewer'
+export { useExampleStore } from './store/useExampleStore'
+export type { ExampleView, BoxTemplate, ExampleState, ExampleActions } from './store/useExampleStore'

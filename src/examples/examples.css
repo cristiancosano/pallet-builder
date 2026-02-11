@@ -1,0 +1,485 @@
+/* ═══════════════════════════════════════════════════════════════
+ *  Estilos para las vistas de ejemplo (PalletBuilder, Warehouse, Truck)
+ * ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Layout de vista ─── */
+.ex-view {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  height: 100%;
+}
+
+/* ─── Sidebars ─── */
+.ex-sidebar {
+  width: 280px;
+  overflow-y: auto;
+  padding: 0.75rem;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.ex-sidebar-left {
+  border-right: 1px solid var(--border);
+}
+
+.ex-sidebar-right {
+  border-left: 1px solid var(--border);
+}
+
+/* ─── Tarjeta de plantilla de caja ─── */
+.ex-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.ex-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.ex-card-header strong {
+  flex: 1;
+  font-size: 0.85rem;
+}
+
+.ex-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+}
+
+.ex-card-body label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ex-card-body input[type="number"] {
+  width: 60px;
+  padding: 0.2rem 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.8rem;
+  text-align: right;
+}
+
+.ex-color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ex-dims,
+.ex-weight {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+/* ─── Templates list ─── */
+.ex-templates {
+  max-height: 320px;
+  overflow-y: auto;
+  margin-bottom: 0.5rem;
+}
+
+/* ─── Lista de pallets ─── */
+.ex-pallet-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.ex-pallet-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ex-pallet-item:hover {
+  border-color: var(--text-muted);
+}
+
+.ex-pallet-item.active {
+  border-color: var(--primary);
+  background: rgba(233, 69, 96, 0.1);
+}
+
+/* ─── Botones ─── */
+.ex-btn {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.15s ease;
+}
+
+.ex-btn:hover {
+  border-color: var(--text);
+  color: var(--text);
+}
+
+.ex-btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.ex-btn-primary:hover {
+  filter: brightness(1.1);
+  color: #fff;
+}
+
+.ex-btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  filter: none;
+}
+
+.ex-btn-danger {
+  color: var(--error);
+  border-color: var(--error);
+}
+
+.ex-btn-danger:hover {
+  background: rgba(233, 69, 96, 0.15);
+}
+
+.ex-btn-full {
+  width: 100%;
+  text-align: center;
+}
+
+.ex-btn-icon {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.75rem;
+  border-radius: 3px;
+  transition: all 0.15s ease;
+}
+
+.ex-btn-icon:hover {
+  background: rgba(233, 69, 96, 0.2);
+  color: var(--error);
+}
+
+/* ─── Input ─── */
+.ex-input {
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+
+.ex-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+/* ─── Texto muted ─── */
+.ex-muted {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.ex-text-danger {
+  color: var(--error) !important;
+  font-weight: 700;
+}
+
+/* ─── Control de pisos ─── */
+.ex-floor-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.ex-floor-control button {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.ex-floor-control button:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.ex-floor-control span {
+  font-size: 0.85rem;
+  min-width: 60px;
+  text-align: center;
+}
+
+/* ─── Controles de nudge (mover) ─── */
+.ex-nudge-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 0.25rem;
+  margin: 0.5rem 0;
+  max-width: 140px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.ex-nudge-grid button {
+  padding: 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.15s ease;
+}
+
+.ex-nudge-grid button:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.ex-nudge-grid button:nth-child(1) {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.ex-nudge-grid button:nth-child(2) {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.ex-nudge-grid button:nth-child(3) {
+  grid-column: 3;
+  grid-row: 2;
+}
+
+.ex-nudge-grid button:nth-child(4) {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+/* ─── Acciones ─── */
+.ex-actions {
+  margin-top: 0.5rem;
+}
+
+.ex-actions h4 {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+
+/* ─── Tab toggle ─── */
+.ex-tab-toggle {
+  display: flex;
+  gap: 0;
+  margin-bottom: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.ex-tab-toggle button {
+  flex: 1;
+  padding: 0.35rem 0.5rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: all 0.15s ease;
+}
+
+.ex-tab-toggle button:first-child {
+  border-right: 1px solid var(--border);
+}
+
+.ex-tab-toggle button.active {
+  background: var(--primary);
+  color: #fff;
+}
+
+.ex-tab-toggle button:hover:not(.active) {
+  color: var(--text);
+}
+
+/* ─── Form (diálogo) ─── */
+.ex-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.ex-form label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  gap: 0.5rem;
+}
+
+.ex-form input[type="text"],
+.ex-form input[type="number"],
+.ex-form input {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.85rem;
+  width: 120px;
+}
+
+.ex-form input[type="color"] {
+  width: 40px;
+  height: 28px;
+  padding: 2px;
+  cursor: pointer;
+}
+
+/* ─── Diálogo modal ─── */
+.ex-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.ex-dialog {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.25rem;
+  width: 380px;
+  max-width: 90vw;
+}
+
+.ex-dialog h3 {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.ex-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+/* ─── Header de la app de ejemplo ─── */
+.ex-header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0.6rem 1.25rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.ex-header h1 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.ex-nav {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.ex-nav-btn {
+  padding: 0.4rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.ex-nav-btn:hover {
+  color: var(--text);
+  border-color: var(--text-muted);
+}
+
+.ex-nav-btn.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+/* ─── Badges de conteo ─── */
+.ex-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--border);
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-left: 0.35rem;
+}
+
+.ex-nav-btn.active .ex-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
