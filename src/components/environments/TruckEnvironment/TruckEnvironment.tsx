@@ -16,6 +16,12 @@ export interface TruckEnvironmentProps {
   truck: Truck
   /** Mostrar/ocultar grid en el suelo del remolque (por defecto usa preset) */
   showGrid?: boolean
+  /** Opacidad de las paredes (0 = invisible, 1 = opaco). Por defecto: 0.3 */
+  wallOpacity?: number
+  /** Mostrar/ocultar el techo del remolque. Por defecto: false (oculto para ver interior) */
+  showRoof?: boolean
+  /** Mostrar/ocultar paredes laterales. Por defecto: true */
+  showSideWalls?: boolean
   children?: ReactNode
 }
 
@@ -50,6 +56,9 @@ const Wheel = memo<WheelProps>(function Wheel({ position, radius, width, color }
 export const TruckEnvironment = memo<TruckEnvironmentProps>(function TruckEnvironment({
   truck,
   showGrid,
+  wallOpacity = 0.3,
+  showRoof = false,
+  showSideWalls = true,
   children,
 }) {
   const preset = usePreset()
@@ -108,9 +117,13 @@ export const TruckEnvironment = memo<TruckEnvironmentProps>(function TruckEnviro
         color={truckStyle.wallColor}
         roughness={0.5}
         metalness={0.3}
+        transparent={wallOpacity < 1}
+        opacity={wallOpacity}
+        side={THREE.DoubleSide}
+        depthWrite={wallOpacity >= 0.95}
       />
     ),
-    [truckStyle.wallColor],
+    [truckStyle.wallColor, wallOpacity],
   )
 
   return (
@@ -136,16 +149,20 @@ export const TruckEnvironment = memo<TruckEnvironmentProps>(function TruckEnviro
       </mesh>
 
       {/* Pared izquierda */}
-      <mesh position={[-wallThickness / 2, remolqueFloorY + th / 2, td / 2]} castShadow>
-        <boxGeometry args={[wallThickness, th, td + wallThickness]} />
-        {solidWallMaterial}
-      </mesh>
+      {showSideWalls && (
+        <mesh position={[-wallThickness / 2, remolqueFloorY + th / 2, td / 2]} castShadow>
+          <boxGeometry args={[wallThickness, th, td + wallThickness]} />
+          {solidWallMaterial}
+        </mesh>
+      )}
 
       {/* Pared derecha */}
-      <mesh position={[tw + wallThickness / 2, remolqueFloorY + th / 2, td / 2]} castShadow>
-        <boxGeometry args={[wallThickness, th, td + wallThickness]} />
-        {solidWallMaterial}
-      </mesh>
+      {showSideWalls && (
+        <mesh position={[tw + wallThickness / 2, remolqueFloorY + th / 2, td / 2]} castShadow>
+          <boxGeometry args={[wallThickness, th, td + wallThickness]} />
+          {solidWallMaterial}
+        </mesh>
+      )}
 
       {/* Pared trasera (fondo del remolque — lado cabina) */}
       <mesh position={[tw / 2, remolqueFloorY + th / 2, td + wallThickness / 2]} castShadow>
@@ -154,10 +171,12 @@ export const TruckEnvironment = memo<TruckEnvironmentProps>(function TruckEnviro
       </mesh>
 
       {/* Techo del remolque */}
-      <mesh position={[tw / 2, remolqueFloorY + th, td / 2]} castShadow>
-        <boxGeometry args={[tw + wallThickness * 2, wallThickness, td + wallThickness]} />
-        {solidWallMaterial}
-      </mesh>
+      {showRoof && (
+        <mesh position={[tw / 2, remolqueFloorY + th, td / 2]} castShadow>
+          <boxGeometry args={[tw + wallThickness * 2, wallThickness, td + wallThickness]} />
+          {solidWallMaterial}
+        </mesh>
+      )}
 
       {/* Grid del suelo del remolque */}
       {resolvedShowGrid && gridGeometry && (

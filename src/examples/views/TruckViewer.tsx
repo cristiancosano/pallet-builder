@@ -41,6 +41,9 @@ export function TruckViewer() {
   const [cameraPreset, setCameraPreset] = useState<CameraPreset>('perspective')
   const [scenePreset, setScenePreset] = useState('industrial')
   const [showLabels, setShowLabels] = useState(false)
+  const [wallOpacity, setWallOpacity] = useState(0.3)
+  const [showRoof, setShowRoof] = useState(false)
+  const [showSideWalls, setShowSideWalls] = useState(true)
   const [selectedPalletToAdd, setSelectedPalletToAdd] = useState<string>('')
   const [addSource, setAddSource] = useState<'store' | 'warehouse'>('store')
 
@@ -231,6 +234,9 @@ export function TruckViewer() {
           selectedBoxId={selectedBoxId}
           highlightedBoxId={hoveredBoxId}
           showLabels={showLabels}
+          wallOpacity={wallOpacity}
+          showRoof={showRoof}
+          showSideWalls={showSideWalls}
           cameraPreset={cameraPreset}
           showMiniMap
           onBoxClick={handleBoxClick}
@@ -326,6 +332,42 @@ export function TruckViewer() {
           <label className="checkbox" style={{ marginTop: '0.5rem' }}>
             <input type="checkbox" checked={showLabels} onChange={(e) => setShowLabels(e.target.checked)} />
             Mostrar etiquetas
+          </label>
+        </section>
+
+        {/* Visibilidad del camión */}
+        <section className="panel">
+          <h3>Visibilidad interior</h3>
+          
+          <label style={{ display: 'block', marginBottom: '0.5rem' }}>
+            Opacidad paredes: {(wallOpacity * 100).toFixed(0)}%
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.1"
+              value={wallOpacity}
+              onChange={(e) => setWallOpacity(parseFloat(e.target.value))}
+              style={{ width: '100%', marginTop: '0.25rem' }}
+            />
+          </label>
+          
+          <label className="checkbox" style={{ marginTop: '0.5rem' }}>
+            <input
+              type="checkbox"
+              checked={showRoof}
+              onChange={(e) => setShowRoof(e.target.checked)}
+            />
+            Mostrar techo
+          </label>
+          
+          <label className="checkbox" style={{ marginTop: '0.5rem' }}>
+            <input
+              type="checkbox"
+              checked={showSideWalls}
+              onChange={(e) => setShowSideWalls(e.target.checked)}
+            />
+            Mostrar paredes laterales
           </label>
         </section>
 

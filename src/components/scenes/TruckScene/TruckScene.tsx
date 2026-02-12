@@ -28,6 +28,12 @@ export interface TruckSceneProps {
   showLabels?: boolean
   /** Mostrar/ocultar el grid del suelo del remolque */
   showGrid?: boolean
+  /** Opacidad de las paredes (0-1). Por defecto: 0.3 */
+  wallOpacity?: number
+  /** Mostrar/ocultar el techo. Por defecto: false */
+  showRoof?: boolean
+  /** Mostrar/ocultar paredes laterales. Por defecto: true */
+  showSideWalls?: boolean
   cameraPreset?: CameraPreset
   /** Mostrar mini-mapa (por defecto: false) */
   showMiniMap?: boolean
@@ -46,6 +52,9 @@ export const TruckScene = memo<TruckSceneProps>(function TruckScene({
   highlightedColor,
   showLabels = false,
   showGrid,
+  wallOpacity = 0.3,
+  showRoof = false,
+  showSideWalls = true,
   cameraPreset = 'perspective',
   showMiniMap = false,
   onBoxClick,
@@ -77,8 +86,8 @@ export const TruckScene = memo<TruckSceneProps>(function TruckScene({
   
   // Calcular posición inicial de cámara basada en el tamaño del camión
   const initialCameraPosition = useMemo<[number, number, number]>(() => {
-    // Vista isométrica desde la esquina superior
-    return [w * 1.3, h * 1.5, d * 1.2]
+    // Vista elevada ligeramente hacia el interior para mejor visualización
+    return [w * 0.8, h * 1.2, d * 0.4]
   }, [w, h, d])
 
   // Filtrar palets válidos - no renderizar los que estén fuera del camión
@@ -119,7 +128,13 @@ export const TruckScene = memo<TruckSceneProps>(function TruckScene({
           />
           <CameraTracker onPositionChange={handleCameraPositionChange} />
 
-          <TruckEnvironment truck={truck} showGrid={showGrid}>
+          <TruckEnvironment 
+            truck={truck} 
+            showGrid={showGrid}
+            wallOpacity={wallOpacity}
+            showRoof={showRoof}
+            showSideWalls={showSideWalls}
+          >
             {validPallets.map(pp => (
               <StackedPalletComponent
                 key={pp.id}
