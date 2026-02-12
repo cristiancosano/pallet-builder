@@ -348,7 +348,6 @@ function checkCollision(
 ---
 
 **Próximos Ejemplos Planeados**:
-- [ ] Drag and drop completo con validación
 - [ ] Exportación a GLB/GLTF
 - [ ] Integración con física (Rapier)
 - [ ] Algoritmo de bin packing 3D

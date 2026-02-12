@@ -229,27 +229,6 @@ function InteractiveCube() {
 }
 ```
 
-### Drag and Drop 3D (con drei)
-
-```typescript
-import { useDrag } from '@use-gesture/react'
-
-function DraggableObject() {
-  const [position, setPosition] = useState<[number, number, number]>([0, 0, 0])
-  
-  const bind = useDrag(({ offset: [x, y] }) => {
-    setPosition([x / 100, 0, y / 100])
-  })
-  
-  return (
-    <mesh position={position} {...bind()}>
-      <boxGeometry />
-      <meshStandardMaterial />
-    </mesh>
-  )
-}
-```
-
 ## ⚡ Optimización de Rendimiento
 
 ### 1. Instanced Meshes (para muchos objetos idénticos)

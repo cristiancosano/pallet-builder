@@ -118,8 +118,8 @@ export const TruckScene = memo<TruckSceneProps>(function TruckScene({
         }}
         style={{ width: '100%', height: '100%', ...style }}
       >
-        <PresetProvider preset={preset}>
-          <CameraControlsComponent
+          <PresetProvider preset={preset}>
+            <CameraControlsComponent
             preset={cameraPreset}
             target={target}
             sceneSize={sceneSize}

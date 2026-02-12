@@ -134,6 +134,7 @@ export const CameraControlsComponent = memo<CameraControlsProps>(function Camera
       autoRotateSpeed={0.5}
       enablePan={enablePan}
       enableZoom={enableZoom}
+      enableRotate
       minDistance={minDistance}
       maxDistance={maxDistance}
       enableDamping

@@ -94,26 +94,28 @@ export const StackedPalletComponent = memo<StackedPalletComponentProps>(
               />
 
               {/* Cajas en posición relativa al top del palet */}
-              {floor.boxes.map(pb => (
-                <BoxComponent
-                  key={pb.id}
-                  placedBox={{
-                    ...pb,
-                    position: {
-                      x: pb.position.x,
-                      y: pb.position.y + palletTopY,
-                      z: pb.position.z,
-                    },
-                  }}
-                  selected={selectedBoxId === pb.id}
-                  highlighted={highlightedBoxId === pb.id}
-                  selectedColor={selectedColor}
-                  highlightedColor={highlightedColor}
-                  showLabel={showLabels}
-                  onClick={onBoxClick}
-                  onHover={onBoxHover}
-                />
-              ))}
+              {floor.boxes.map(pb => {
+                return (
+                  <BoxComponent
+                    key={pb.id}
+                    placedBox={{
+                      ...pb,
+                      position: {
+                        x: pb.position.x,
+                        y: pb.position.y + palletTopY,
+                        z: pb.position.z,
+                      },
+                    }}
+                    selected={selectedBoxId === pb.id}
+                    highlighted={highlightedBoxId === pb.id}
+                    selectedColor={selectedColor}
+                    highlightedColor={highlightedColor}
+                    showLabel={showLabels}
+                    onClick={onBoxClick}
+                    onHover={onBoxHover}
+                  />
+                )
+              })}
 
               {/* Separador encima (si hay) */}
               {floor.separatorAbove && (

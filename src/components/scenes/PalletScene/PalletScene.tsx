@@ -129,9 +129,9 @@ export const PalletScene = memo<PalletSceneProps>(function PalletScene({
         }}
         style={{ width: '100%', height: '100%', ...style }}
       >
-        <PresetProvider preset={preset}>
-          {/* Iluminación */}
-          <ambientLight intensity={0.4} />
+          <PresetProvider preset={preset}>
+            {/* Iluminación */}
+            <ambientLight intensity={0.4} />
           <directionalLight
             position={[5, 8, 5]}
             intensity={0.8}

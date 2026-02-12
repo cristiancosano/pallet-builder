@@ -139,6 +139,8 @@ export function PalletBuilder() {
     setSelectedStrategy,
     buildPallet,
     updatePallet,
+    editPalletInBuilder,
+    newPalletInBuilder,
     setSelectedBoxId,
     setHoveredBoxId,
     selectedBoxId,
@@ -238,10 +240,11 @@ export function PalletBuilder() {
     if (builderPalletId) {
       updatePallet(builderPalletId, { ...stackedPallet, metadata: { ...stackedPallet.metadata, name } })
     } else {
-      buildPallet(name, [], pallet, stackedPallet.floors)
+      const palId = buildPallet(name, [], pallet, stackedPallet.floors)
+      editPalletInBuilder(palId)
     }
     setPalletName('')
-  }, [palletName, builderPalletId, stackedPallet, pallets, pallet, buildPallet, updatePallet])
+  }, [palletName, builderPalletId, stackedPallet, pallets, pallet, buildPallet, updatePallet, editPalletInBuilder])
 
   const handleBoxClick = useCallback((id: string) => {
     setSelectedBoxId(selectedBoxId === id ? null : id)
@@ -290,7 +293,12 @@ export function PalletBuilder() {
           ) : (
             <ul className="ex-pallet-list">
               {Object.entries(pallets).map(([id, sp]) => (
-                <li key={id} className="ex-pallet-item">
+                <li
+                  key={id}
+                  className={`ex-pallet-item${builderPalletId === id ? ' active' : ''}`}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => editPalletInBuilder(id)}
+                >
                   <span>{String(sp.metadata.name || id)}</span>
                   <span className="ex-muted">
                     {sp.floors.length} piso{sp.floors.length > 1 ? 's' : ''}
@@ -298,6 +306,15 @@ export function PalletBuilder() {
                 </li>
               ))}
             </ul>
+          )}
+          {builderPalletId && (
+            <button
+              className="ex-btn ex-btn-full"
+              style={{ marginTop: '0.5rem' }}
+              onClick={() => newPalletInBuilder()}
+            >
+              + Nuevo pallet
+            </button>
           )}
         </section>
       </aside>

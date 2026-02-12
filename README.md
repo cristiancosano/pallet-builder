@@ -261,7 +261,6 @@ Ver [docs/guides/aspect-customization.md](./docs/guides/aspect-customization.md)
 - [ ] **`<Container>`**: Contenedor marítimo
 - [ ] **Algoritmos de optimización**: Sugerencias automáticas de colocación
 - [ ] **Exportación**: Generar reportes y visualizaciones
-- [ ] **Drag & Drop**: Mover cajas interactivamente
 - [ ] **Física**: Simulación de peso y estabilidad
 - [ ] **Multiplayer**: Colaboración en tiempo real
 

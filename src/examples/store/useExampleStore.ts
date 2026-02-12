@@ -88,6 +88,7 @@ export interface ExampleActions {
   updatePallet: (id: string, stackedPallet: StackedPallet) => void
   removePallet: (id: string) => void
   editPalletInBuilder: (palletId: string) => void
+  newPalletInBuilder: () => void
 
   // Warehouse
   addPalletToWarehouse: (palletId: string, position: Position3D) => void
@@ -106,6 +107,7 @@ export interface ExampleActions {
   setSelectedBoxId: (id: string | null) => void
   setSelectedPalletPlacementId: (id: string | null) => void
   setHoveredBoxId: (id: string | null) => void
+
 }
 
 // ── Datos iniciales ──────────────────────────────────────────────
@@ -232,7 +234,6 @@ export const useExampleStore = create<ExampleState & ExampleActions>((set, get) 
     }
     set((s) => ({
       pallets: { ...s.pallets, [palletId]: stackedPallet },
-      builderPalletId: null,
     }))
     return palletId
   },
@@ -277,6 +278,13 @@ export const useExampleStore = create<ExampleState & ExampleActions>((set, get) 
       activeView: 'pallet-builder',
       builderPalletId: palletId,
       selectedBoxId: null,
+    }),
+
+  newPalletInBuilder: () =>
+    set({
+      builderPalletId: null,
+      selectedBoxId: null,
+      hoveredBoxId: null,
     }),
 
   // ── Warehouse ──────────────────────────────────────────────────
