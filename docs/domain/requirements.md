@@ -421,6 +421,7 @@
   - Arquitectura modular basada en componentes.
   - TypeScript con tipado estricto.
   - Documentación inline y externa.
+  - Tests unitarios obligatorios para el core (entidades, validación, packing, factories).
   - Cobertura de testing (objetivo: > 70%).
   - Patrón Adapter para algoritmos de empaquetado.
 
@@ -449,6 +450,18 @@
   - Texturas y materiales PBR.
   - Iluminación HDR realista.
   - Decorados creíbles para almacén y camión.
+
+### RNF-009: Tests Unitarios
+- **Prioridad**: Alta
+- **Descripción**: El core de la librería (TypeScript puro) debe estar cubierto por tests unitarios automatizados.
+- **Criterios**:
+  - Test runner: Vitest.
+  - Scripts npm: `test`, `test:watch`, `test:coverage`.
+  - Cobertura mínima: > 70% del core (`entities/`, `validation/`, `packing/`, `factories/`).
+  - Cada regla de negocio (BR-XXX) debe tener al menos un test positivo, uno negativo y uno de borde.
+  - Los algoritmos de empaquetado deben tener tests que verifiquen: sin colisiones en resultado, métricas válidas, cajas no colocadas reportadas.
+  - Las factories deben testearse para presets, custom y generación de IDs únicos.
+  - Los tests NO dependen de React ni Three.js; solo TypeScript puro.
 
 ---
 
@@ -496,4 +509,4 @@
 
 - Los requisitos pueden evolucionar durante el desarrollo.
 - Prioridades sujetas a cambio según feedback.
-- Fecha de última actualización: 10 de febrero de 2026.
+- Fecha de última actualización: 13 de febrero de 2026.

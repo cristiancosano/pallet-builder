@@ -10,6 +10,7 @@ Guías y tutoriales para desarrolladores que trabajan en Pallet Builder.
 | [3d-components-development.md](./3d-components-development.md) | Fundamentos de desarrollo de componentes React Three Fiber |
 | [aspect-customization.md](./aspect-customization.md) | Sistema AspectConfig para personalización visual |
 | [pallet-types.md](./pallet-types.md) | Tipos de palets estándar internacionales y cómo usarlos |
+| [testing.md](./testing.md) | Estrategia de tests unitarios del core, convenciones y cobertura |
 
 ## Para comenzar
 
