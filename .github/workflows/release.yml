@@ -89,7 +89,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
@@ -116,5 +115,7 @@ jobs:
       - name: Build package
         run: pnpm build
 
-      - name: Publish to NPM
-        run: npm publish --access public --provenance
+      - name: Publish to NPM (with verbose logging)
+        run: npm publish --access public --provenance --loglevel verbose
+        env:
+          NPM_CONFIG_LOGLEVEL: verbose
