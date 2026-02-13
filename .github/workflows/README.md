@@ -21,32 +21,36 @@ pnpm publish --access public
 
 Esto creará el package `@cristiancosano/pallet-builder` en npm.
 
-### 2. Configurar Trusted Publishing en NPM
+### 2. Configurar Token de NPM en GitHub
 
-**Después de la primera publicación**, configura Trusted Publishing para futuras releases automáticas:
+Para publicaciones automáticas desde GitHub Actions, necesitas un token de npm:
 
-1. Ve a [npmjs.com](https://www.npmjs.com/) e inicia sesión
-2. Ve al package `@cristiancosano/pallet-builder` → **Settings**
-3. En la sección **Publishing access**, busca **Trusted publishers**
-4. Click en **Add trusted publisher**
-5. Configura:
-   - **Provider**: GitHub Actions
-   - **Organization**: `cristiancosano`
-   - **Repository**: `pallet-builder`
-   - **Workflow**: `release.yml`
-   - **Environment**: (déjalo vacío)
-6. Click **Add**
+1. Ve a [npmjs.com/settings/tokens](https://www.npmjs.com/settings/tokens)
+2. **Generate New Token** → **Granular Access Token**
+3. Configura:
+   - **Token name**: `GitHub Actions - pallet-builder`
+   - **Expiration**: 90+ días (o no expiration)
+   - **Packages and scopes**: 
+     - Select packages → `@cristiancosano/pallet-builder`
+     - Permissions: **Read and write**
+4. Copia el token generado
+5. Ve a tu repo en GitHub → **Settings** → **Secrets and variables** → **Actions**
+6. **New repository secret**:
+   - Name: `NPM_TOKEN`
+   - Value: pega el token
+7. **Add secret**
 
-✅ **¡Ya está!** Ahora las siguientes publicaciones se harán automáticamente desde GitHub Actions sin necesidad de tokens.
+✅ **¡Listo!** El workflow usará este token para autenticar y publicará con provenance firmado (OIDC).
 
-**¿Qué es Trusted Publishing?**
+**¿Qué es Provenance?**
 
-Trusted Publishing usa OpenID Connect (OIDC) para verificar que las publicaciones provienen de tu repositorio de GitHub sin necesidad de tokens. Beneficios:
-- ✅ Sin tokens que expiren o rotar
-- ✅ Sin secrets que gestionar en GitHub
-- ✅ Mayor seguridad (no hay credenciales que comprometer)
-- ✅ Provenance automático (attestations firmadas por npm)
-- ✅ Compatible con 2FA sin configuración adicional
+El flag `--provenance` hace que npm genere attestations firmadas (usando OIDC) que prueban:
+- ✅ El package fue construido en GitHub Actions
+- ✅ Desde qué repositorio, commit y workflow
+- ✅ Inmutabilidad y trazabilidad de la build
+- ✅ Compatible con verificación de supply chain
+
+Esto añade una capa extra de seguridad sin necesidad de gestión manual de firmas.
 
 ### 3. Permisos del GITHUB_TOKEN
 
@@ -65,7 +69,7 @@ El workflow ya está configurado con los permisos necesarios:
    pnpm publish --access public
    ```
 
-2. **Configura Trusted Publishing en npm** (ver sección anterior)
+2. **Configura el token en GitHub** (ver sección anterior)
 
 3. **Crea el tag en git**:
    ```bash
@@ -75,7 +79,7 @@ El workflow ya está configurado con los permisos necesarios:
 
 ### Siguientes releases (automáticas)
 
-Una vez configurado Trusted Publishing, las siguientes releases son completamente automáticas:
+Las siguientes releases son completamente automáticas:
 
 ### Siguientes releases (automáticas)
 
@@ -134,9 +138,9 @@ Después de que el workflow termine exitosamente:
 
 3. **Verifica el provenance (attestation)**:
    ```bash
-   npm audit signatures
+   npm view @cristiancosano/pallet-builder --json | jq .dist
    ```
-   Verás que el package tiene una firma verificable desde GitHub Actions
+   Verás información de provenance y sigstore attestations
 
 4. **Prueba la instalación**:
    ```bash
@@ -150,6 +154,6 @@ Después de que el workflow termine exitosamente:
 - El proyecto usa **pnpm 10.x** — asegúrate de que `pnpm-lock.yaml` esté commiteado
 - El comando `pnpm version` actualiza automáticamente el `package.json` y crea un commit y tag
 - La publicación usa `--access public` porque es un scoped package
-- La publicación usa `--provenance` para generar attestations firmadas de npm
+- La publicación usa `--provenance` para generar attestations firmadas verificables
 - La release de GitHub se genera automáticamente con las notas del changelog
-- **No se necesitan tokens**: Usa Trusted Publishing (OIDC) para máxima seguridad
+- El token de npm debe tener permisos de **Read and write** para el package específico
