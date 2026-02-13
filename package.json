@@ -1,6 +1,6 @@
 {
   "name": "@cristiancosano/pallet-builder",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "packageManager": "pnpm@10.10.0",
   "description": "React Three Fiber component library for 3D pallet visualization and logistics simulation",

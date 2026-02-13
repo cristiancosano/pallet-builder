@@ -1,42 +1,42 @@
 # 📦 @cristiancosano/pallet-builder
 
-Sistema modular para visualización 3D de logística basado en React y React Three Fiber.
+Modular system for 3D logistics visualization based on React and React Three Fiber.
 
-## 🎯 Descripción
+## 🎯 Description
 
-Librería de componentes React que permite construir escenas 3D interactivas para visualizar operaciones logísticas como almacenes, pallets, cajas y contenedores de transporte.
+React component library that allows building interactive 3D scenes to visualize logistics operations such as warehouses, pallets, boxes, and shipping containers.
 
-## ✨ Características
+## ✨ Features
 
-- 🧱 **Sistema Modular**: Arquitectura limpia con separación entre lógica core y visualización
-- 🎨 **Componentes Declarativos**: API simple basada en componentes React
-- 📐 **Estándares Industriales**: Soporte para pallets EURO, ISO y personalizados  
-- 🔄 **Real-time**: Visualización 3D interactiva con controles de cámara
-- 📊 **Validaciones**: Lógica de negocio para validar dimensiones, pesos y ocupación
-- 🎯 **Agnóstico**: Core en TypeScript puro sin dependencias de frameworks de visualización
+- 🧱 **Modular System**: Clean architecture with separation between core logic and visualization
+- 🎨 **Declarative Components**: Simple API based on React components
+- 📐 **Industry Standards**: Support for EURO, ISO, and custom pallets
+- 🔄 **Real-time**: Interactive 3D visualization with camera controls
+- 📊 **Validations**: Business logic to validate dimensions, weights, and occupancy
+- 🎯 **Agnostic**: Core in pure TypeScript without dependencies on visualization frameworks
 
-## 🚀 Inicio Rápido
+## 🚀 Quick Start
 
-### Instalación
+### Installation
 
 ```bash
 pnpm install
 ```
 
-### Desarrollo
+### Development
 
 ```bash
 pnpm dev
 ```
 
-Abre [http://localhost:5173](http://localhost:5173) para ver la demo.
+Open [http://localhost:5173](http://localhost:5173) to view the demo.
 
-## 📖 Uso Básico
+## 📖 Basic Usage
 
 ```tsx
 import { Warehouse, Pallet, Box } from '@cristiancosano/pallet-builder';
 
-function MiAppLogistica() {
+function MyLogisticsApp() {
   return (
     <Warehouse width={5000} depth={5000} showGrid>
       
@@ -45,7 +45,7 @@ function MiAppLogistica() {
           dimensions={[400, 300, 200]} 
           position={[0, 0, 0]} 
           color="orange" 
-          label="Caja 1"
+          label="Box 1"
         />
       </Pallet>
 
@@ -62,16 +62,16 @@ function MiAppLogistica() {
 }
 ```
 
-## 🏗️ Arquitectura
+## 🏗️ Architecture
 
-### Core (TypeScript Puro)
+### Core (Pure TypeScript)
 
-Lógica de negocio agnóstica al framework de visualización:
+Framework-agnostic business logic:
 
 ```typescript
 import { BoxEntity, PalletEntity, ContainerEntity } from '@cristiancosano/pallet-builder';
 
-// Crear un pallet con validaciones
+// Create a pallet with validations
 const pallet = new PalletEntity({
   id: 'pallet-1',
   type: 'EURO',
@@ -86,95 +86,95 @@ const pallet = new PalletEntity({
   ]
 });
 
-// Validar configuración
+// Validate configuration
 const validation = pallet.validate();
-console.log('Peso total:', pallet.getTotalWeight(), 'kg');
-console.log('Ocupación:', pallet.getOccupancyRate(), '%');
+console.log('Total weight:', pallet.getTotalWeight(), 'kg');
+console.log('Occupancy:', pallet.getOccupancyRate(), '%');
 ```
 
-### Componentes (React + R3F)
+### Components (React + R3F)
 
-Componentes visuales 3D construidos con React Three Fiber:
+3D visual components built with React Three Fiber:
 
-- **`<Warehouse>`**: Contenedor principal de la escena 3D
-- **`<Pallet>`**: Representa un pallet con soporte para EURO, ISO o custom
-- **`<Box>`**: Caja/paquete posicionable dentro de un pallet
-- **`<CameraControls>`**: Controles de cámara (órbita, primera persona, etc.)
+- **`<Warehouse>`**: Main container of the 3D scene
+- **`<Pallet>`**: Represents a pallet with support for EURO, ISO, or custom
+- **`<Box>`**: Box/package positionable inside a pallet
+- **`<CameraControls>`**: Camera controls (orbit, first person, etc.)
 
-## 📐 Estándares de Pallets
+## 📐 Pallet Standards
 
 ### EUR-Pallet (EURO)
-- Dimensiones: 800 x 1200 x 144 mm
-- Peso máximo: 1500 kg
-- Altura máxima: 2200 mm
+- Dimensions: 800 x 1200 x 144 mm
+- Maximum weight: 1500 kg
+- Maximum height: 2200 mm
 
 ### ISO Pallet (ISO)
-- Dimensiones: 1000 x 1200 x 144 mm
-- Peso máximo: 2000 kg
-- Altura máxima: 2200 mm
+- Dimensions: 1000 x 1200 x 144 mm
+- Maximum weight: 2000 kg
+- Maximum height: 2200 mm
 
 ### Custom
-- Dimensiones personalizables
-- Configuración flexible
+- Customizable dimensions
+- Flexible configuration
 
-## 🎨 Componentes Disponibles
+## 🎨 Available Components
 
 ### Warehouse
 
-Contenedor principal que crea la escena 3D con iluminación y controles.
+Main container that creates the 3D scene with lighting and controls.
 
 ```tsx
 <Warehouse 
   width={5000}      // mm
   depth={5000}      // mm
-  height={3000}     // mm (opcional)
-  showGrid={true}   // Mostrar grid del suelo
+  height={3000}     // mm (optional)
+  showGrid={true}   // Show ground grid
   backgroundColor="#f0f0f0"
 >
-  {/* Contenido */}
+  {/* Content */}
 </Warehouse>
 ```
 
 ### Pallet
 
-Representa un pallet estándar o personalizado.
+Represents a standard or custom pallet.
 
 ```tsx
 <Pallet 
   id="pallet-1"
   type="EURO"             // 'EURO' | 'ISO' | 'CUSTOM'
-  position={[0, 0, 0]}    // [x, y, z] en mm
-  rotation={[0, 0, 0]}    // [x, y, z] en radianes
+  position={[0, 0, 0]}    // [x, y, z] in mm
+  rotation={[0, 0, 0]}    // [x, y, z] in radians
   color="#8B4513"
   showDimensions={false}
-  customDimensions={[1000, 144, 1200]}  // Para CUSTOM
+  customDimensions={[1000, 144, 1200]}  // For CUSTOM
 >
-  {/* Cajas */}
+  {/* Boxes */}
 </Pallet>
 ```
 
 ### Box
 
-Caja o paquete dentro de un pallet.
+Box or package inside a pallet.
 
 ```tsx
 <Box 
-  dimensions={[400, 300, 200]}  // [ancho, alto, fondo] en mm
-  position={[0, 0, 0]}           // [x, y, z] dentro del pallet
+  dimensions={[400, 300, 200]}  // [width, height, depth] in mm
+  position={[0, 0, 0]}           // [x, y, z] inside the pallet
   color="#ff6b35"
-  label="Caja 1"
+  label="Box 1"
   onClick={() => console.log('Click!')}
   onHover={(hovered) => console.log(hovered)}
 />
 ```
 
-## 🎨 Personalización con AspectConfig
+## 🎨 Customization with AspectConfig
 
-El sistema `AspectConfig` permite personalizar la apariencia visual de cada componente individualmente.
+The `AspectConfig` system allows customizing the visual appearance of each component individually.
 
-### Configuración Global
+### Global Configuration
 
-Define valores por defecto para todos los componentes:
+Define default values for all components:
 
 ```tsx
 import { ConfigurationProvider, PalletBuilder, Box } from '@cristiancosano/pallet-builder';
@@ -199,32 +199,32 @@ function App() {
 }
 ```
 
-### Personalización por Componente
+### Component-level Customization
 
-Cada pallet o caja puede tener su propia textura, modelo o color:
+Each pallet or box can have its own texture, model, or color:
 
 ```tsx
 <PalletBuilder 
   palletType="EURO"
   palletAspect={{ textureUrl: '/textures/dark_wood.png' }}
 >
-  {/* Caja con color personalizado */}
+  {/* Box with custom color */}
   <Box 
     dimensions={[400, 300, 200]} 
     position={[0, 0, 0]}
     aspect={{ color: '#00d9ff' }}
-    label="Caja Azul"
+    label="Blue Box"
   />
   
-  {/* Caja con textura personalizada */}
+  {/* Box with custom texture */}
   <Box 
     dimensions={[400, 300, 200]} 
     position={[400, 0, 0]}
     aspect={{ textureUrl: '/textures/cardboard.png' }}
-    label="Caja Cartón"
+    label="Cardboard Box"
   />
   
-  {/* Caja con modelo 3D personalizado */}
+  {/* Box with custom 3D model */}
   <Box 
     dimensions={[400, 300, 200]} 
     position={[0, 0, 400]}
@@ -232,62 +232,62 @@ Cada pallet o caja puede tener su propia textura, modelo o color:
       modelUrl: '/objects/custom_box.glb',
       textureUrl: '/textures/metal.png'
     }}
-    label="Caja Metal"
+    label="Metal Box"
   />
 </PalletBuilder>
 ```
 
-### Modelos 3D y Texturas por Defecto
+### Default 3D Models and Textures
 
-La librería viene configurada con modelos y texturas por defecto:
+The library comes configured with default models and textures:
 
 **Pallets:**
-- Modelo: `/objects/pallet.glb`
-- Textura: `/textures/pallet_planks.png`
+- Model: `/objects/pallet.glb`
+- Texture: `/textures/pallet_planks.png`
 
-**Cajas:**
-- Modelo: `/objects/box.glb`
-- Textura: `/textures/crate_roughness.png`
+**Boxes:**
+- Model: `/objects/box.glb`
+- Texture: `/textures/crate_roughness.png`
 
-Puedes usar tus propios modelos GLB y texturas personalizando la configuración global o usando el prop `aspect` en cada componente individual.
+You can use your own GLB models and textures by customizing the global configuration or using the `aspect` prop on each individual component.
 
-**Prioridad**: `aspect prop` > `ConfigurationProvider` > `defaults`
+**Priority**: `aspect prop` > `ConfigurationProvider` > `defaults`
 
-Ver [docs/guides/aspect-customization.md](./docs/guides/aspect-customization.md) para ejemplos completos.
+See [docs/guides/aspect-customization.md](./docs/guides/aspect-customization.md) for full examples.
 
 ## 🔮 Roadmap
 
-- [ ] **`<Truck>`**: Componente para visualizar camiones
-- [ ] **`<Container>`**: Contenedor marítimo
-- [ ] **Algoritmos de optimización**: Sugerencias automáticas de colocación
-- [ ] **Exportación**: Generar reportes y visualizaciones
-- [ ] **Física**: Simulación de peso y estabilidad
-- [ ] **Multiplayer**: Colaboración en tiempo real
+- [ ] **`<Truck>`**: Component for truck visualization
+- [ ] **`<Container>`**: Shipping container
+- [ ] **Optimization Algorithms**: Automatic placement suggestions
+- [ ] **Export**: Generate reports and visualizations
+- [ ] **Physics**: Weight and stability simulation
+- [ ] **Multiplayer**: Real-time collaboration
 
-## 📚 Documentación
+## 📚 Documentation
 
-Consulta la carpeta `/docs` para más información:
+Check the `/docs` folder for more information:
 
-- [Guía de Componentes 3D](./docs/guides/3d-components-development.md)
-- [Modelo de Dominio](./docs/context/domain-model.md)
-- [Convenciones de Código](./docs/context/coding-conventions.md)
+- [3D Components Guide](./docs/guides/3d-components-development.md)
+- [Domain Model](./docs/context/domain-model.md)
+- [Coding Conventions](./docs/context/coding-conventions.md)
 
-## 🤝 Contribuir
+## 🤝 Contributing
 
-Ver [CONTRIBUTING.md](./docs/guides/contributing.md)
+See [CONTRIBUTING.md](./docs/guides/contributing.md)
 
-## � Atribuciones
+## 📄 Attributions
 
-Este proyecto utiliza assets de terceros:
+This project uses third-party assets:
 
 - **HDR Environment Map**: [HDRI Haven/Poly Haven](https://polyhaven.com/) (CC0 License) via [pmndrs/drei-assets](https://github.com/pmndrs/drei-assets)
 
-Ver [ATTRIBUTIONS.md](./ATTRIBUTIONS.md) para detalles completos.
+See [ATTRIBUTIONS.md](./ATTRIBUTIONS.md) for full details.
 
-## �📄 Licencia
+## 📄 License
 
 MIT © Cristian Cosano
 
 ---
 
-**Hecho con ❤️ usando React Three Fiber**
+**Made with ❤️ using React Three Fiber**
