@@ -1,11 +1,43 @@
 {
   "name": "@cristiancosano/pallet-builder",
-  "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
+  "packageManager": "pnpm@10.10.0",
+  "description": "React Three Fiber component library for 3D pallet visualization and logistics simulation",
+  "main": "./dist/pallet-builder.js",
+  "types": "./dist/pallet-builder.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/pallet-builder.js",
+      "types": "./dist/pallet-builder.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cristiancosano/pallet-builder"
+  },
+  "bugs": {
+    "url": "https://github.com/cristiancosano/pallet-builder/issues"
+  },
+  "homepage": "https://github.com/cristiancosano/pallet-builder#readme",
+  "keywords": [
+    "react",
+    "three",
+    "react-three-fiber",
+    "3d",
+    "pallet",
+    "logistics",
+    "warehouse",
+    "bin-packing"
+  ],
+  "author": "Cristian Cosano",
+  "license": "MIT",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vite build && tsc -p tsconfig.lib.json",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",

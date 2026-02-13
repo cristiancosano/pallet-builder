@@ -18,7 +18,7 @@ export default defineConfig({
       fileName: 'pallet-builder',
     },
     rollupOptions: {
-      external: ['react', 'react-dom', 'three', '@react-three/fiber', '@react-three/drei'],
+      external: ['react', 'react-dom', 'three', '@react-three/fiber', '@react-three/drei', 'zustand'],
       output: {
         globals: {
           react: 'React',
@@ -26,8 +26,10 @@ export default defineConfig({
           three: 'THREE',
           '@react-three/fiber': 'ReactThreeFiber',
           '@react-three/drei': 'drei',
+          zustand: 'zustand',
         },
       },
     },
+    sourcemap: true,
   },
 })

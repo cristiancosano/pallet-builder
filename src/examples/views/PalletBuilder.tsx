@@ -158,7 +158,7 @@ export function PalletBuilder() {
   const boxes: Box[] = useMemo(
     () =>
       boxTemplates.flatMap((tpl) =>
-        Array.from({ length: tpl.quantity }, (_, i) =>
+        Array.from({ length: tpl.quantity }, () =>
           BoxFactory.create(
             { ...tpl.box.dimensions },
             {

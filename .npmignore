@@ -1,0 +1,38 @@
+# Development
+src/
+docs/
+public/
+
+# Build tools
+.git
+.gitignore
+.eslintrc.json
+.prettierignore
+tsconfig.json
+tsconfig.app.json
+tsconfig.node.json
+vite.config.ts
+vitest.config.ts
+eslint.config.js
+pnpm-lock.yaml
+
+# Test
+**/*.test.ts
+**/*.spec.ts
+src/core/__tests__/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+npm-debug.log
+pnpm-debug.log
+yarn-debug.log

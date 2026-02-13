@@ -17,13 +17,11 @@ import type { PlacedPallet } from '@/core/entities/PlacedPallet'
 import type { Truck } from '@/core/entities/Truck'
 import type { Room } from '@/core/entities/Room'
 import type { PlacedBox } from '@/core/entities/PlacedBox'
-import type { Separator } from '@/core/entities/Separator'
 import type { PalletFloor } from '@/core/entities/PalletFloor'
 import type { Position3D } from '@/core/types'
 import { BoxFactory } from '@/core/factories/BoxFactory'
-import { PalletFactory } from '@/core/factories/PalletFactory'
 import { TruckFactory } from '@/core/factories/TruckFactory'
-import { TruckType, SeparatorMaterial } from '@/core/types'
+import { TruckType } from '@/core/types'
 
 // ── Tipos auxiliares ─────────────────────────────────────────────
 
@@ -179,7 +177,7 @@ function createDefaultTruck(): Truck {
 
 // ── Store ────────────────────────────────────────────────────────
 
-export const useExampleStore = create<ExampleState & ExampleActions>((set, get) => ({
+export const useExampleStore = create<ExampleState & ExampleActions>((set, _) => ({
   // Estado inicial
   activeView: 'pallet-builder',
   boxTemplates: createDefaultBoxTemplates(),
