@@ -2,6 +2,12 @@
 
 Esta carpeta contiene ejemplos prácticos de implementación y casos de uso del proyecto Pallet Builder 3D.
 
+## Documentación Disponible
+
+| Documento | Descripción |
+|-----------|-------------|
+| [packing-patterns.md](./packing-patterns.md) | Patrones de uso de estrategias de empaquetado (8 patrones completos) |
+
 ## 📂 Estructura
 
 ### [basic/](./basic)

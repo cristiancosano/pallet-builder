@@ -113,7 +113,17 @@ export const BoxComponent = memo<BoxProps>(function BoxComponent({
         />
       </mesh>
 
-      {/* Borde de señalización (selección o highlight) — mesh escalado para grosor visible */}
+      {/* Bordes permanentes para distinguir cajas adyacentes del mismo color */}
+      <lineSegments position={pos}>
+        <edgesGeometry args={[new THREE.BoxGeometry(...scaledDims)]} />
+        <lineBasicMaterial
+          color={borderColor ?? '#000000'}
+          opacity={borderColor ? 1 : 0.4}
+          transparent
+        />
+      </lineSegments>
+
+      {/* Borde de señalización adicional para selección/highlight */}
       {borderColor && (
         <mesh position={pos}>
           <boxGeometry args={scaledDims} />
@@ -126,12 +136,6 @@ export const BoxComponent = memo<BoxProps>(function BoxComponent({
             depthTest={false}
           />
         </mesh>
-      )}
-      {borderColor && (
-        <lineSegments position={pos} renderOrder={999}>
-          <edgesGeometry args={[new THREE.BoxGeometry(...scaledDims)]} />
-          <lineBasicMaterial color={borderColor} />
-        </lineSegments>
       )}
 
       {/* Label */}

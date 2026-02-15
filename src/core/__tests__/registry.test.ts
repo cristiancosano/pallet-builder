@@ -28,13 +28,14 @@ class DummyStrategy implements PackingStrategy {
 }
 
 describe('PackingRegistry', () => {
-  it('registra las 3 estrategias built-in por defecto', () => {
+  it('registra las 4 estrategias built-in por defecto', () => {
     const registry = new PackingRegistry()
     const ids = registry.listIds()
     expect(ids).toContain('column')
     expect(ids).toContain('bin-packing-3d')
     expect(ids).toContain('type-group')
-    expect(ids).toHaveLength(3)
+    expect(ids).toContain('material-grouping')
+    expect(ids).toHaveLength(4)
   })
 
   it('permite registrar una estrategia custom', () => {
@@ -58,7 +59,7 @@ describe('PackingRegistry', () => {
   it('list() devuelve todas las estrategias', () => {
     const registry = new PackingRegistry()
     const strategies = registry.list()
-    expect(strategies.length).toBe(3)
+    expect(strategies.length).toBe(4)
     expect(strategies.every(s => s.id && s.name)).toBe(true)
   })
 
@@ -89,5 +90,6 @@ describe('defaultRegistry (singleton)', () => {
     expect(defaultRegistry.has('column')).toBe(true)
     expect(defaultRegistry.has('bin-packing-3d')).toBe(true)
     expect(defaultRegistry.has('type-group')).toBe(true)
+    expect(defaultRegistry.has('material-grouping')).toBe(true)
   })
 })

@@ -15,6 +15,17 @@ Pallet Builder es una **librería npm de componentes React/R3F** para visualizar
 | [design/](./design) | Decisiones de diseño visual y UX |
 | [setup/](./setup) | Instalación y configuración del entorno |
 
+## Documentos principales
+
+| Documento | Descripción |
+|-----------|-------------|
+| [Packing Algorithms](./domain/packing-algorithms.md) | Algoritmos de empaquetado (MaterialGroupingStrategy, BinPacking3D, etc.) |
+| [Packing Strategies API](./api/packing-strategies.md) | Referencia de API de estrategias de empaquetado |
+| [Strategy Selection Guide](./guides/packing-strategy-selection.md) | Guía para elegir la estrategia apropiada |
+| [Packing Patterns](./examples/packing-patterns.md) | Ejemplos de uso y patrones comunes |
+| [ADR-004: Strategy Pattern](./architecture/ADR-004-packing-strategy-pattern.md) | Decisión arquitectónica sobre el patrón Strategy |
+| [implementation-plan.md](./implementation-plan.md) | Plan de implementación del proyecto |
+
 ## Inicio rápido
 
 1. [Project Overview](./context/project-overview.md) — Qué es, para quién, cómo funciona.

@@ -9,6 +9,7 @@ Documentación del modelo de dominio: entidades, reglas de negocio, requisitos y
 | [requirements.md](./requirements.md) | 34 requisitos funcionales + 8 no funcionales organizados en 10 áreas |
 | [entities.md](./entities.md) | 11 entidades de dominio con interfaces TypeScript (Warehouse, Room, Truck, Pallet, Box, StackedPallet, etc.) |
 | [business-rules.md](./business-rules.md) | ~20 reglas de negocio con severidades (error/warning) en 6 categorías |
+| [packing-algorithms.md](./packing-algorithms.md) | Algoritmos de empaquetado (MaterialGroupingStrategy, BinPacking3D, etc.) con reglas de dominio |
 | [glossary.md](./glossary.md) | Glosario de lenguaje ubicuo — términos obligatorios al generar código |
 - Restricciones técnicas
 - Dependencias del sistema

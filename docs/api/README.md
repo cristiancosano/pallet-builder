@@ -2,6 +2,12 @@
 
 Referencia de la API pública de Pallet Builder. Se generará conforme avance la implementación.
 
+## Documentación Disponible
+
+| Documento | Descripción |
+|-----------|-------------|
+| [packing-strategies.md](./packing-strategies.md) | API de estrategias de empaquetado (PackingStrategy, PackingRegistry, estrategias disponibles) |
+
 ## Estructura prevista
 
 | Sección | Contenido |
