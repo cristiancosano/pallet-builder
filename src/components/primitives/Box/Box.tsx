@@ -3,24 +3,24 @@
  * Controlado, memo, conversión mm→metros interna
  */
 
-import { memo, useCallback, useRef, useMemo } from 'react'
-import { Html } from '@react-three/drei'
-import * as THREE from 'three'
-import type { PlacedBox } from '@/core/entities/PlacedBox'
-import { UNITS } from '@/core/constants'
-import { usePreset } from '@/context/PresetContext'
+import { memo, useCallback, useRef, useMemo } from "react";
+import { Html, Edges } from "@react-three/drei";
+import * as THREE from "three";
+import type { PlacedBox } from "@/core/entities/PlacedBox";
+import { UNITS } from "@/core/constants";
+import { usePreset } from "@/context/PresetContext";
 
 export interface BoxProps {
-  placedBox: PlacedBox
-  selected?: boolean
-  highlighted?: boolean
-  showLabel?: boolean
-  color?: string
-  opacity?: number
-  selectedColor?: string
-  highlightedColor?: string
-  onClick?: (id: string) => void
-  onHover?: (id: string | null) => void
+  placedBox: PlacedBox;
+  selected?: boolean;
+  highlighted?: boolean;
+  showLabel?: boolean;
+  color?: string;
+  opacity?: number;
+  selectedColor?: string;
+  highlightedColor?: string;
+  onClick?: (id: string) => void;
+  onHover?: (id: string | null) => void;
 }
 
 export const BoxComponent = memo<BoxProps>(function BoxComponent({
@@ -35,29 +35,30 @@ export const BoxComponent = memo<BoxProps>(function BoxComponent({
   onClick,
   onHover,
 }) {
-  const meshRef = useRef<THREE.Mesh>(null)
-  const preset = usePreset()
+  const meshRef = useRef<THREE.Mesh>(null);
+  const preset = usePreset();
 
-  const { box, position, rotation } = placedBox
-  const s = UNITS.MM_TO_M
+  const { box, position, rotation } = placedBox;
+  const s = UNITS.MM_TO_M;
 
   // Resolver estilos: prop > preset
-  const resolvedColor = color ?? box.color ?? preset.box.color
-  const resolvedOpacity = opacity ?? preset.box.opacity
-  const resolvedSelectedColor = selectedColor ?? preset.selection.selectedColor
-  const resolvedHighlightedColor = highlightedColor ?? preset.selection.highlightedColor
+  const resolvedColor = color ?? box.color ?? preset.box.color;
+  const resolvedOpacity = opacity ?? preset.box.opacity;
+  const resolvedSelectedColor = selectedColor ?? preset.selection.selectedColor;
+  const resolvedHighlightedColor =
+    highlightedColor ?? preset.selection.highlightedColor;
 
   // Dimensiones (teniendo en cuenta rotación en Y)
-  let w = box.dimensions.width
-  let d = box.dimensions.depth
+  let w = box.dimensions.width;
+  let d = box.dimensions.depth;
   if (rotation.y === 90 || rotation.y === 270) {
-    ;[w, d] = [d, w]
+    [w, d] = [d, w];
   }
 
   const scaledDims = useMemo(
     () => [w * s, box.dimensions.height * s, d * s] as [number, number, number],
     [w, d, box.dimensions.height, s],
-  )
+  );
 
   // Posición: convertir mm→m, centrar geometría en Y
   const pos = useMemo(
@@ -68,29 +69,33 @@ export const BoxComponent = memo<BoxProps>(function BoxComponent({
         position.z * s + scaledDims[2] / 2,
       ),
     [position, scaledDims, s],
-  )
+  );
 
-  const borderColor = selected ? resolvedSelectedColor : highlighted ? resolvedHighlightedColor : null
+  const borderColor = selected
+    ? resolvedSelectedColor
+    : highlighted
+      ? resolvedHighlightedColor
+      : null;
 
   const handleClick = useCallback(
     (e: { stopPropagation: () => void }) => {
-      e.stopPropagation()
-      onClick?.(placedBox.id)
+      e.stopPropagation();
+      onClick?.(placedBox.id);
     },
     [onClick, placedBox.id],
-  )
+  );
 
   const handlePointerOver = useCallback(
     (e: { stopPropagation: () => void }) => {
-      e.stopPropagation()
-      onHover?.(placedBox.id)
+      e.stopPropagation();
+      onHover?.(placedBox.id);
     },
     [onHover, placedBox.id],
-  )
+  );
 
   const handlePointerOut = useCallback(() => {
-    onHover?.(null)
-  }, [onHover])
+    onHover?.(null);
+  }, [onHover]);
 
   return (
     <group>
@@ -110,18 +115,20 @@ export const BoxComponent = memo<BoxProps>(function BoxComponent({
           opacity={resolvedOpacity}
           roughness={preset.box.roughness}
           metalness={preset.box.metalness}
+          polygonOffset
+          polygonOffsetFactor={1}
+          polygonOffsetUnits={1}
         />
-      </mesh>
-
-      {/* Bordes permanentes para distinguir cajas adyacentes del mismo color */}
-      <lineSegments position={pos}>
-        <edgesGeometry args={[new THREE.BoxGeometry(...scaledDims)]} />
-        <lineBasicMaterial
-          color={borderColor ?? '#000000'}
-          opacity={borderColor ? 1 : 0.4}
+        {/* Bordes permanentes para distinguir cajas adyacentes del mismo color */}
+        <Edges
+          linewidth={2}
+          scale={1.001}
+          threshold={15}
+          color={borderColor ?? "#000000"}
+          opacity={borderColor ? 1 : 0.6}
           transparent
         />
-      </lineSegments>
+      </mesh>
 
       {/* Borde de señalización adicional para selección/highlight */}
       {borderColor && (
@@ -130,7 +137,7 @@ export const BoxComponent = memo<BoxProps>(function BoxComponent({
           <meshBasicMaterial
             color={borderColor}
             wireframe
-            wireframeLinewidth={1}
+            wireframeLinewidth={2}
             transparent
             opacity={0.9}
             depthTest={false}
@@ -144,18 +151,18 @@ export const BoxComponent = memo<BoxProps>(function BoxComponent({
           position={[pos.x, pos.y + scaledDims[1] / 2 + 0.05, pos.z]}
           center
           style={{
-            background: 'rgba(0,0,0,0.75)',
-            color: 'white',
-            padding: '2px 6px',
-            borderRadius: '3px',
-            fontSize: '11px',
-            whiteSpace: 'nowrap',
-            pointerEvents: 'none',
+            background: "rgba(0,0,0,0.75)",
+            color: "white",
+            padding: "2px 6px",
+            borderRadius: "3px",
+            fontSize: "11px",
+            whiteSpace: "nowrap",
+            pointerEvents: "none",
           }}
         >
           {box.sku ?? box.type ?? box.id}
         </Html>
       )}
     </group>
-  )
-})
+  );
+});
