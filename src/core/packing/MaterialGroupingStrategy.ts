@@ -48,11 +48,14 @@
  * ```
  */
 
-import type { Box } from '../entities/Box'
-import type { Pallet } from '../entities/Pallet'
-import type { PlacedBox } from '../entities/PlacedBox'
-import type { PackingStrategy, PackingResult } from './PackingStrategy'
-import { calculateCenterOfGravity, calculateStabilityScore } from '../validation/stability'
+import type { Box } from "../entities/Box";
+import type { Pallet } from "../entities/Pallet";
+import type { PlacedBox } from "../entities/PlacedBox";
+import type { PackingStrategy, PackingResult } from "./PackingStrategy";
+import {
+  calculateCenterOfGravity,
+  calculateStabilityScore,
+} from "../validation/stability";
 
 // ─── Auxiliary Interfaces ────────────────────────────────────────────
 
@@ -61,13 +64,13 @@ import { calculateCenterOfGravity, calculateStabilityScore } from '../validation
  */
 interface Layer {
   /** Vertical position (Y coordinate) where this layer starts */
-  y: number
+  y: number;
   /** Height of this layer (max height of boxes in it) */
-  height: number
+  height: number;
   /** Boxes placed in this layer */
-  placements: PlacedBox[]
+  placements: PlacedBox[];
   /** Coverage percentage of pallet area (0-100) */
-  coverage: number
+  coverage: number;
 }
 
 /**
@@ -76,13 +79,13 @@ interface Layer {
  */
 interface Rectangle {
   /** X coordinate of bottom-left corner */
-  x: number
+  x: number;
   /** Z coordinate of bottom-left corner */
-  z: number
+  z: number;
   /** Width of the rectangle */
-  width: number
+  width: number;
   /** Depth of the rectangle */
-  depth: number
+  depth: number;
 }
 
 /**
@@ -90,18 +93,18 @@ interface Rectangle {
  */
 interface Orientation {
   /** Effective width after rotation */
-  width: number
+  width: number;
   /** Effective depth after rotation */
-  depth: number
+  depth: number;
   /** Rotation angle in degrees (0 or 90) */
-  rotation: 0 | 90
+  rotation: 0 | 90;
 }
 
 // ─── MaterialGroupingStrategy ────────────────────────────────────────
 
 export class MaterialGroupingStrategy implements PackingStrategy {
-  readonly id = 'material-grouping'
-  readonly name = 'Material & Product Grouping'
+  readonly id = "material-grouping";
+  readonly name = "Material & Product Grouping";
 
   /**
    * Packs boxes into a pallet using layer-based approach with material ordering
@@ -112,33 +115,33 @@ export class MaterialGroupingStrategy implements PackingStrategy {
    */
   pack(boxes: Box[], pallet: Pallet): PackingResult {
     if (boxes.length === 0) {
-      return this.emptyResult(pallet)
+      return this.emptyResult();
     }
 
     // Phase 1: Sort boxes by material weight, product, and dimensions
-    const sortedBoxes = this.sortBoxes(boxes)
+    const sortedBoxes = this.sortBoxes(boxes);
 
     // Phase 2: Group by material weight
-    const materialGroups = this.groupByMaterialWeight(sortedBoxes)
+    const materialGroups = this.groupByMaterialWeight(sortedBoxes);
 
     // Phase 3: Build layers from bottom to top
-    const layers = this.buildLayers(materialGroups, pallet)
+    const layers = this.buildLayers(materialGroups, pallet);
 
     // Phase 4: Convert layers to placements
-    const placements = layers.flatMap(layer => layer.placements)
+    const placements = layers.flatMap((layer) => layer.placements);
 
     // Phase 5: Calculate metrics
     const unplacedBoxes = boxes.filter(
-      box => !placements.some(p => p.box.id === box.id),
-    )
+      (box) => !placements.some((p) => p.box.id === box.id),
+    );
 
-    const metrics = this.calculateMetrics(placements, pallet)
+    const metrics = this.calculateMetrics(placements, pallet);
 
     return {
       placements,
       metrics,
       unplacedBoxes,
-    }
+    };
   }
 
   // ─── Phase 1: Sorting ──────────────────────────────────────────────
@@ -156,29 +159,29 @@ export class MaterialGroupingStrategy implements PackingStrategy {
   private sortBoxes(boxes: Box[]): Box[] {
     return [...boxes].sort((a, b) => {
       // 1. Material weight (descending) - more resistant = lower in pallet
-      const weightA = a.materialWeight ?? 5
-      const weightB = b.materialWeight ?? 5
+      const weightA = a.materialWeight ?? 5;
+      const weightB = b.materialWeight ?? 5;
       if (weightA !== weightB) {
-        return weightB - weightA
+        return weightB - weightA;
       }
 
       // 2. Product (alphabetical grouping)
-      const productA = a.product ?? ''
-      const productB = b.product ?? ''
+      const productA = a.product ?? "";
+      const productB = b.product ?? "";
       if (productA !== productB) {
-        return productA.localeCompare(productB)
+        return productA.localeCompare(productB);
       }
 
       // 3. Base area (descending) - larger boxes first
-      const areaA = a.dimensions.width * a.dimensions.depth
-      const areaB = b.dimensions.width * b.dimensions.depth
+      const areaA = a.dimensions.width * a.dimensions.depth;
+      const areaB = b.dimensions.width * b.dimensions.depth;
       if (areaA !== areaB) {
-        return areaB - areaA
+        return areaB - areaA;
       }
 
       // 4. Height (descending) - taller boxes first
-      return b.dimensions.height - a.dimensions.height
-    })
+      return b.dimensions.height - a.dimensions.height;
+    });
   }
 
   /**
@@ -188,18 +191,18 @@ export class MaterialGroupingStrategy implements PackingStrategy {
    * @returns Map of material weight → boxes with that weight
    */
   private groupByMaterialWeight(boxes: Box[]): Map<number, Box[]> {
-    const groups = new Map<number, Box[]>()
+    const groups = new Map<number, Box[]>();
 
     for (const box of boxes) {
-      const weight = box.materialWeight ?? 5
+      const weight = box.materialWeight ?? 5;
       if (!groups.has(weight)) {
-        groups.set(weight, [])
+        groups.set(weight, []);
       }
-      groups.get(weight)!.push(box)
+      groups.get(weight)!.push(box);
     }
 
     // Sort groups by material weight (descending)
-    return new Map([...groups.entries()].sort((a, b) => b[0] - a[0]))
+    return new Map([...groups.entries()].sort((a, b) => b[0] - a[0]));
   }
 
   // ─── Phase 2: Layer Construction ──────────────────────────────────
@@ -211,15 +214,18 @@ export class MaterialGroupingStrategy implements PackingStrategy {
    * @param pallet - Target pallet
    * @returns Array of layers
    */
-  private buildLayers(materialGroups: Map<number, Box[]>, pallet: Pallet): Layer[] {
-    const layers: Layer[] = []
-    const occupiedColumns = new Map<string, string>() // "x,z" → product
-    const allPlacements: PlacedBox[] = [] // All placements from all layers
-    let currentY = 0
+  private buildLayers(
+    materialGroups: Map<number, Box[]>,
+    pallet: Pallet,
+  ): Layer[] {
+    const layers: Layer[] = [];
+    const occupiedColumns = new Map<string, string>(); // "x,z" → product
+    const allPlacements: PlacedBox[] = []; // All placements from all layers
+    let currentY = 0;
 
     // Process each material group (from highest weight to lowest)
     for (const [, boxes] of materialGroups) {
-      let remainingBoxes = [...boxes]
+      let remainingBoxes = [...boxes];
 
       // Build layers until all boxes of this material are placed
       while (remainingBoxes.length > 0) {
@@ -229,29 +235,29 @@ export class MaterialGroupingStrategy implements PackingStrategy {
           currentY,
           occupiedColumns,
           allPlacements,
-        )
+        );
 
         if (layer.placements.length === 0) {
           // No boxes could be placed, stop trying
-          break
+          break;
         }
 
-        layers.push(layer)
-        allPlacements.push(...layer.placements) // Add new placements to history
-        currentY += layer.height
+        layers.push(layer);
+        allPlacements.push(...layer.placements); // Add new placements to history
+        currentY += layer.height;
 
         // Remove placed boxes from remaining
-        const placedIds = new Set(layer.placements.map(p => p.box.id))
-        remainingBoxes = remainingBoxes.filter(b => !placedIds.has(b.id))
+        const placedIds = new Set(layer.placements.map((p) => p.box.id));
+        remainingBoxes = remainingBoxes.filter((b) => !placedIds.has(b.id));
 
         // Check if we exceeded pallet height
         if (currentY >= pallet.maxStackHeight) {
-          break
+          break;
         }
       }
     }
 
-    return layers
+    return layers;
   }
 
   /**
@@ -283,10 +289,10 @@ export class MaterialGroupingStrategy implements PackingStrategy {
       currentY,
       occupiedColumns,
       allPreviousPlacements,
-    )
+    );
 
     if (uniformLayer && uniformLayer.coverage >= 95) {
-      return uniformLayer
+      return uniformLayer;
     }
 
     // Strategy 2: Mixed height layer (fallback)
@@ -296,19 +302,19 @@ export class MaterialGroupingStrategy implements PackingStrategy {
       currentY,
       occupiedColumns,
       allPreviousPlacements,
-    )
+    );
 
     if (mixedLayer && mixedLayer.coverage >= 95) {
-      return mixedLayer
+      return mixedLayer;
     }
 
     // Strategy 3: Use best available (even if partial coverage)
     const bestLayer =
       (uniformLayer?.coverage ?? 0) > (mixedLayer?.coverage ?? 0)
         ? uniformLayer
-        : mixedLayer
+        : mixedLayer;
 
-    return bestLayer ?? this.emptyLayer(currentY)
+    return bestLayer ?? this.emptyLayer(currentY);
   }
 
   /**
@@ -329,24 +335,24 @@ export class MaterialGroupingStrategy implements PackingStrategy {
     allPreviousPlacements: PlacedBox[],
   ): Layer | null {
     // Group boxes by height
-    const heightGroups = new Map<number, Box[]>()
+    const heightGroups = new Map<number, Box[]>();
     for (const box of boxes) {
-      const h = box.dimensions.height
+      const h = box.dimensions.height;
       if (!heightGroups.has(h)) {
-        heightGroups.set(h, [])
+        heightGroups.set(h, []);
       }
-      heightGroups.get(h)!.push(box)
+      heightGroups.get(h)!.push(box);
     }
 
     // Try each height group, starting with most common
     const sortedHeights = [...heightGroups.entries()].sort(
       (a, b) => b[1].length - a[1].length,
-    )
+    );
 
     for (const [height, boxesOfHeight] of sortedHeights) {
       // Check if layer would exceed pallet height
       if (currentY + height > pallet.maxStackHeight) {
-        continue
+        continue;
       }
 
       const layer = this.placeBoxesInLayer(
@@ -356,14 +362,14 @@ export class MaterialGroupingStrategy implements PackingStrategy {
         height,
         occupiedColumns,
         allPreviousPlacements,
-      )
+      );
 
       if (layer.coverage >= 95) {
-        return layer
+        return layer;
       }
     }
 
-    return null
+    return null;
   }
 
   /**
@@ -384,7 +390,14 @@ export class MaterialGroupingStrategy implements PackingStrategy {
     allPreviousPlacements: PlacedBox[],
   ): Layer | null {
     // Allow any height (no filtering)
-    return this.placeBoxesInLayer(boxes, pallet, currentY, null, occupiedColumns, allPreviousPlacements)
+    return this.placeBoxesInLayer(
+      boxes,
+      pallet,
+      currentY,
+      null,
+      occupiedColumns,
+      allPreviousPlacements,
+    );
   }
 
   // ─── Phase 3: Maximal Rectangles 2D Packing ───────────────────────
@@ -416,32 +429,32 @@ export class MaterialGroupingStrategy implements PackingStrategy {
         width: pallet.dimensions.width,
         depth: pallet.dimensions.depth,
       },
-    ]
+    ];
 
-    const placements: PlacedBox[] = []
+    const placements: PlacedBox[] = [];
 
     // Group boxes by product for grouping priority
-    const productGroups = this.groupByProduct(boxes)
+    const productGroups = this.groupByProduct(boxes);
 
     // Sort product groups by count (more boxes = higher priority)
     const sortedGroups = [...productGroups.entries()].sort(
       (a, b) => b[1].length - a[1].length,
-    )
+    );
 
-    let placementId = 0
+    let placementId = 0;
 
     // For each product group
     for (const [product, productBoxes] of sortedGroups) {
       // Filter by target height if specified
       const validBoxes = targetHeight
-        ? productBoxes.filter(b => b.dimensions.height === targetHeight)
-        : productBoxes
+        ? productBoxes.filter((b) => b.dimensions.height === targetHeight)
+        : productBoxes;
 
       // Try to place each box
       for (const box of validBoxes) {
         // Check if layer would exceed pallet height
         if (currentY + box.dimensions.height > pallet.maxStackHeight) {
-          continue
+          continue;
         }
 
         // Try both orientations (0° and 90°)
@@ -456,13 +469,14 @@ export class MaterialGroupingStrategy implements PackingStrategy {
             depth: box.dimensions.width,
             rotation: 90,
           },
-        ]
-
-        let placed = false
+        ];
 
         for (const orientation of orientations) {
           // Combine previous placements with current layer placements for support calculation
-          const allPlacementsForSupport = [...allPreviousPlacements, ...placements]
+          const allPlacementsForSupport = [
+            ...allPreviousPlacements,
+            ...placements,
+          ];
 
           const bestRect = this.findBestRectangle(
             orientation,
@@ -471,8 +485,7 @@ export class MaterialGroupingStrategy implements PackingStrategy {
             product,
             currentY,
             allPlacementsForSupport,
-            pallet,
-          )
+          );
 
           if (bestRect) {
             // Place the box
@@ -483,20 +496,17 @@ export class MaterialGroupingStrategy implements PackingStrategy {
               rotation: { x: 0, y: orientation.rotation, z: 0 },
               supportedBy: [],
               supporting: [],
-            }
+            };
 
-            placements.push(placement)
-            placed = true
+            placements.push(placement);
 
             // Update occupied columns
             this.updateOccupiedColumns(
               occupiedColumns,
               bestRect.x,
               bestRect.z,
-              orientation.width,
-              orientation.depth,
               product,
-            )
+            );
 
             // Update free rectangles (Maximal Rectangles algorithm)
             this.updateFreeRectangles(
@@ -504,35 +514,35 @@ export class MaterialGroupingStrategy implements PackingStrategy {
               bestRect,
               orientation.width,
               orientation.depth,
-            )
+            );
 
-            break // Box placed, try next box
+            break; // Box placed, try next box
           }
         }
       }
     }
 
     // Calculate layer metrics
-    const palletArea = pallet.dimensions.width * pallet.dimensions.depth
+    const palletArea = pallet.dimensions.width * pallet.dimensions.depth;
     const usedArea = placements.reduce((sum, p) => {
       const w =
-        p.rotation.y === 90 ? p.box.dimensions.depth : p.box.dimensions.width
+        p.rotation.y === 90 ? p.box.dimensions.depth : p.box.dimensions.width;
       const d =
-        p.rotation.y === 90 ? p.box.dimensions.width : p.box.dimensions.depth
-      return sum + w * d
-    }, 0)
+        p.rotation.y === 90 ? p.box.dimensions.width : p.box.dimensions.depth;
+      return sum + w * d;
+    }, 0);
 
     const maxHeight =
       placements.length > 0
-        ? Math.max(...placements.map(p => p.box.dimensions.height))
-        : 0
+        ? Math.max(...placements.map((p) => p.box.dimensions.height))
+        : 0;
 
     return {
       y: currentY,
       height: maxHeight,
       placements,
       coverage: (usedArea / palletArea) * 100,
-    }
+    };
   }
 
   /**
@@ -554,10 +564,9 @@ export class MaterialGroupingStrategy implements PackingStrategy {
     product: string,
     currentY: number,
     existingPlacements: PlacedBox[],
-    pallet: Pallet,
   ): Rectangle | null {
-    let bestRect: Rectangle | null = null
-    let bestScore = -Infinity
+    let bestRect: Rectangle | null = null;
+    let bestScore = -Infinity;
 
     for (const rect of freeRectangles) {
       // Check if box fits
@@ -570,15 +579,14 @@ export class MaterialGroupingStrategy implements PackingStrategy {
           boxDims.depth,
           currentY,
           existingPlacements,
-          pallet,
-        )
+        );
 
-        const boxBaseArea = boxDims.width * boxDims.depth
-        const supportPercentage = supportArea / boxBaseArea
+        const boxBaseArea = boxDims.width * boxDims.depth;
+        const supportPercentage = supportArea / boxBaseArea;
 
         // Require at least 70% support (unless on ground level which returns 100%)
         if (supportPercentage < 0.7) {
-          continue // Skip this position - insufficient support
+          continue; // Skip this position - insufficient support
         }
 
         // Check if box would extend beyond the lower layer footprint
@@ -594,19 +602,24 @@ export class MaterialGroupingStrategy implements PackingStrategy {
             existingPlacements,
           )
         ) {
-          continue // Skip this position - extends beyond lower layer
+          continue; // Skip this position - extends beyond lower layer
         }
 
-        const score = this.scoreRectangle(rect, boxDims, occupiedColumns, product)
+        const score = this.scoreRectangle(
+          rect,
+          boxDims,
+          occupiedColumns,
+          product,
+        );
 
         if (score > bestScore) {
-          bestScore = score
-          bestRect = rect
+          bestScore = score;
+          bestRect = rect;
         }
       }
     }
 
-    return bestRect
+    return bestRect;
   }
 
   /**
@@ -628,13 +641,12 @@ export class MaterialGroupingStrategy implements PackingStrategy {
     depth: number,
     currentY: number,
     existingPlacements: PlacedBox[],
-    pallet: Pallet,
   ): number {
-    let supportedArea = 0
+    let supportedArea = 0;
 
     // If on ground level (Y=0), full support from pallet
     if (currentY === 0) {
-      return width * depth
+      return width * depth;
     }
 
     // Calculate intersection with boxes in layers below
@@ -642,19 +654,19 @@ export class MaterialGroupingStrategy implements PackingStrategy {
       const boxW =
         placement.rotation.y === 90
           ? placement.box.dimensions.depth
-          : placement.box.dimensions.width
+          : placement.box.dimensions.width;
       const boxD =
         placement.rotation.y === 90
           ? placement.box.dimensions.width
-          : placement.box.dimensions.depth
+          : placement.box.dimensions.depth;
 
-      const boxTop = placement.position.y + placement.box.dimensions.height
+      const boxTop = placement.position.y + placement.box.dimensions.height;
 
       // Only consider boxes whose top surface is at currentY (directly below)
       // Allow small tolerance for floating point errors
-      const tolerance = 1 // 1mm tolerance
+      const tolerance = 1; // 1mm tolerance
       if (Math.abs(boxTop - currentY) > tolerance) {
-        continue // Not directly below
+        continue; // Not directly below
       }
 
       const intersection = this.calculateRectangleIntersection(
@@ -666,11 +678,11 @@ export class MaterialGroupingStrategy implements PackingStrategy {
         placement.position.z,
         boxW,
         boxD,
-      )
-      supportedArea += intersection
+      );
+      supportedArea += intersection;
     }
 
-    return supportedArea
+    return supportedArea;
   }
 
   /**
@@ -688,16 +700,10 @@ export class MaterialGroupingStrategy implements PackingStrategy {
     w2: number,
     d2: number,
   ): number {
-    const overlapX = Math.max(
-      0,
-      Math.min(x1 + w1, x2 + w2) - Math.max(x1, x2),
-    )
-    const overlapZ = Math.max(
-      0,
-      Math.min(z1 + d1, z2 + d2) - Math.max(z1, z2),
-    )
+    const overlapX = Math.max(0, Math.min(x1 + w1, x2 + w2) - Math.max(x1, x2));
+    const overlapZ = Math.max(0, Math.min(z1 + d1, z2 + d2) - Math.max(z1, z2));
 
-    return overlapX * overlapZ
+    return overlapX * overlapZ;
   }
 
   /**
@@ -724,55 +730,51 @@ export class MaterialGroupingStrategy implements PackingStrategy {
   ): boolean {
     // Ground level - no issue
     if (currentY === 0) {
-      return false
+      return false;
     }
 
     // Find all boxes in the layer directly below
-    const boxesDirectlyBelow = existingPlacements.filter(p => {
-      const boxTop = p.position.y + p.box.dimensions.height
-      const tolerance = 1 // 1mm tolerance
-      return Math.abs(boxTop - currentY) <= tolerance
-    })
+    const boxesDirectlyBelow = existingPlacements.filter((p) => {
+      const boxTop = p.position.y + p.box.dimensions.height;
+      const tolerance = 1; // 1mm tolerance
+      return Math.abs(boxTop - currentY) <= tolerance;
+    });
 
     // No boxes below - this shouldn't happen if support was validated
     if (boxesDirectlyBelow.length === 0) {
-      return true // Reject - no base to stack on
+      return true; // Reject - no base to stack on
     }
 
     // Calculate the bounding box of all boxes in the layer directly below
-    let minX = Infinity
-    let maxX = -Infinity
-    let minZ = Infinity
-    let maxZ = -Infinity
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minZ = Infinity;
+    let maxZ = -Infinity;
 
     for (const p of boxesDirectlyBelow) {
       const boxW =
-        p.rotation.y === 90
-          ? p.box.dimensions.depth
-          : p.box.dimensions.width
+        p.rotation.y === 90 ? p.box.dimensions.depth : p.box.dimensions.width;
       const boxD =
-        p.rotation.y === 90
-          ? p.box.dimensions.width
-          : p.box.dimensions.depth
+        p.rotation.y === 90 ? p.box.dimensions.width : p.box.dimensions.depth;
 
-      minX = Math.min(minX, p.position.x)
-      maxX = Math.max(maxX, p.position.x + boxW)
-      minZ = Math.min(minZ, p.position.z)
-      maxZ = Math.max(maxZ, p.position.z + boxD)
+      minX = Math.min(minX, p.position.x);
+      maxX = Math.max(maxX, p.position.x + boxW);
+      minZ = Math.min(minZ, p.position.z);
+      maxZ = Math.max(maxZ, p.position.z + boxD);
     }
 
     // Check if our box would extend beyond this bounding box
-    const boxRight = x + width
-    const boxBack = z + depth
-    const tolerance = 1 // 1mm tolerance
+    const boxRight = x + width;
+    const boxBack = z + depth;
+    const tolerance = 1; // 1mm tolerance
 
     const extendsBeyond =
       x < minX - tolerance ||
       boxRight > maxX + tolerance ||
       z < minZ - tolerance ||
-      boxBack > maxZ + tolerance
+      boxBack > maxZ + tolerance;
 
-    return extendsBeyond
+    return extendsBeyond;
   }
 
   /**
@@ -792,13 +794,13 @@ export class MaterialGroupingStrategy implements PackingStrategy {
     occupiedColumns: Map<string, string>,
     product: string,
   ): number {
-    let score = 0
+    let score = 0;
 
-    const columnKey = `${rect.x},${rect.z}`
+    const columnKey = `${rect.x},${rect.z}`;
 
     // +100: Column continuation (same product in vertical column)
     if (occupiedColumns.get(columnKey) === product) {
-      score += 100
+      score += 100;
     }
 
     // -50: Column mixing (different product in same column)
@@ -806,18 +808,17 @@ export class MaterialGroupingStrategy implements PackingStrategy {
       occupiedColumns.has(columnKey) &&
       occupiedColumns.get(columnKey) !== product
     ) {
-      score -= 50
+      score -= 50;
     }
 
     // +50: Best fit (minimize wasted area)
-    const wastedArea =
-      rect.width * rect.depth - boxDims.width * boxDims.depth
-    score += 50 / (1 + wastedArea / 10000)
+    const wastedArea = rect.width * rect.depth - boxDims.width * boxDims.depth;
+    score += 50 / (1 + wastedArea / 10000);
 
     // +30: Bottom-left preference (more stable)
-    score += 30 / (1 + rect.x / 1000 + rect.z / 1000)
+    score += 30 / (1 + rect.x / 1000 + rect.z / 1000);
 
-    return score
+    return score;
   }
 
   /**
@@ -834,15 +835,15 @@ export class MaterialGroupingStrategy implements PackingStrategy {
     boxWidth: number,
     boxDepth: number,
   ): void {
-    const newRects: Rectangle[] = []
+    const newRects: Rectangle[] = [];
 
     for (let i = freeRects.length - 1; i >= 0; i--) {
-      const rect = freeRects[i]
+      const rect = freeRects[i];
 
       // Check if this rectangle intersects with the placed box
       if (this.rectanglesIntersect(rect, usedRect, boxWidth, boxDepth)) {
         // Remove this rectangle
-        freeRects.splice(i, 1)
+        freeRects.splice(i, 1);
 
         // Generate new rectangles from the split
 
@@ -853,7 +854,7 @@ export class MaterialGroupingStrategy implements PackingStrategy {
             z: rect.z,
             width: usedRect.x - rect.x,
             depth: rect.depth,
-          })
+          });
         }
 
         // Right rectangle
@@ -863,7 +864,7 @@ export class MaterialGroupingStrategy implements PackingStrategy {
             z: rect.z,
             width: rect.x + rect.width - (usedRect.x + boxWidth),
             depth: rect.depth,
-          })
+          });
         }
 
         // Top rectangle
@@ -873,7 +874,7 @@ export class MaterialGroupingStrategy implements PackingStrategy {
             z: rect.z,
             width: rect.width,
             depth: usedRect.z - rect.z,
-          })
+          });
         }
 
         // Bottom rectangle
@@ -883,16 +884,16 @@ export class MaterialGroupingStrategy implements PackingStrategy {
             z: usedRect.z + boxDepth,
             width: rect.width,
             depth: rect.z + rect.depth - (usedRect.z + boxDepth),
-          })
+          });
         }
       }
     }
 
     // Add new rectangles
-    freeRects.push(...newRects)
+    freeRects.push(...newRects);
 
     // Remove rectangles that are contained within others (optimization)
-    this.removeContainedRectangles(freeRects)
+    this.removeContainedRectangles(freeRects);
   }
 
   /**
@@ -909,7 +910,7 @@ export class MaterialGroupingStrategy implements PackingStrategy {
       usedRect.x >= rect.x + rect.width ||
       usedRect.z + boxDepth <= rect.z ||
       usedRect.z >= rect.z + rect.depth
-    )
+    );
   }
 
   /**
@@ -917,12 +918,12 @@ export class MaterialGroupingStrategy implements PackingStrategy {
    */
   private removeContainedRectangles(rectangles: Rectangle[]): void {
     for (let i = rectangles.length - 1; i >= 0; i--) {
-      const rect = rectangles[i]
+      const rect = rectangles[i];
 
       for (let j = 0; j < rectangles.length; j++) {
-        if (i === j) continue
+        if (i === j) continue;
 
-        const other = rectangles[j]
+        const other = rectangles[j];
 
         // Check if rect is contained in other
         if (
@@ -931,8 +932,8 @@ export class MaterialGroupingStrategy implements PackingStrategy {
           rect.x + rect.width <= other.x + other.width &&
           rect.z + rect.depth <= other.z + other.depth
         ) {
-          rectangles.splice(i, 1)
-          break
+          rectangles.splice(i, 1);
+          break;
         }
       }
     }
@@ -945,14 +946,12 @@ export class MaterialGroupingStrategy implements PackingStrategy {
     occupiedColumns: Map<string, string>,
     x: number,
     z: number,
-    width: number,
-    depth: number,
     product: string,
   ): void {
     // Mark this position as occupied by this product
-    const columnKey = `${x},${z}`
+    const columnKey = `${x},${z}`;
     if (!occupiedColumns.has(columnKey)) {
-      occupiedColumns.set(columnKey, product)
+      occupiedColumns.set(columnKey, product);
     }
   }
 
@@ -962,17 +961,17 @@ export class MaterialGroupingStrategy implements PackingStrategy {
    * Groups boxes by product identifier
    */
   private groupByProduct(boxes: Box[]): Map<string, Box[]> {
-    const groups = new Map<string, Box[]>()
+    const groups = new Map<string, Box[]>();
 
     for (const box of boxes) {
-      const product = box.product ?? 'default'
+      const product = box.product ?? "default";
       if (!groups.has(product)) {
-        groups.set(product, [])
+        groups.set(product, []);
       }
-      groups.get(product)!.push(box)
+      groups.get(product)!.push(box);
     }
 
-    return groups
+    return groups;
   }
 
   /**
@@ -984,13 +983,13 @@ export class MaterialGroupingStrategy implements PackingStrategy {
       height: 0,
       placements: [],
       coverage: 0,
-    }
+    };
   }
 
   /**
    * Creates an empty packing result
    */
-  private emptyResult(pallet: Pallet): PackingResult {
+  private emptyResult(): PackingResult {
     return {
       placements: [],
       metrics: {
@@ -1000,7 +999,7 @@ export class MaterialGroupingStrategy implements PackingStrategy {
         stabilityScore: 100,
       },
       unplacedBoxes: [],
-    }
+    };
   }
 
   /**
@@ -1008,16 +1007,14 @@ export class MaterialGroupingStrategy implements PackingStrategy {
    */
   private calculateMetrics(placements: PlacedBox[], pallet: Pallet) {
     const palletVolume =
-      pallet.dimensions.width *
-      pallet.maxStackHeight *
-      pallet.dimensions.depth
+      pallet.dimensions.width * pallet.maxStackHeight * pallet.dimensions.depth;
 
     const usedVolume = placements.reduce((sum, p) => {
-      const d = p.box.dimensions
-      return sum + d.width * d.height * d.depth
-    }, 0)
+      const d = p.box.dimensions;
+      return sum + d.width * d.height * d.depth;
+    }, 0);
 
-    const totalWeight = placements.reduce((sum, p) => sum + p.box.weight, 0)
+    const totalWeight = placements.reduce((sum, p) => sum + p.box.weight, 0);
 
     return {
       volumeUtilization: palletVolume > 0 ? usedVolume / palletVolume : 0,
@@ -1025,6 +1022,6 @@ export class MaterialGroupingStrategy implements PackingStrategy {
         pallet.maxWeight > 0 ? totalWeight / pallet.maxWeight : 0,
       centerOfGravity: calculateCenterOfGravity(placements),
       stabilityScore: calculateStabilityScore(pallet, placements),
-    }
+    };
   }
 }
