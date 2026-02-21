@@ -19,9 +19,9 @@ export type {
   PackingMetrics,
   PalletPreset,
   TruckPreset,
-} from '@/core/types'
+} from "@/core/types";
 
-export { PalletMaterial, SeparatorMaterial, TruckType } from '@/core/types'
+export { PalletMaterial, SeparatorMaterial, TruckType } from "@/core/types";
 
 // ──────────────────────────────────────────────
 // Core — Constants & Presets
@@ -34,7 +34,7 @@ export {
   COLLISION_TOLERANCE,
   MIN_SUPPORT_PERCENTAGE,
   WEIGHT_WARNING_THRESHOLD,
-} from '@/core/constants'
+} from "@/core/constants";
 
 // ──────────────────────────────────────────────
 // Core — Scene Presets (visual themes)
@@ -47,31 +47,35 @@ export type {
   SelectionStyle,
   WarehouseStyle,
   TruckStyle,
-} from '@/core/presets'
+} from "@/core/presets";
 
 export {
   PRESET_UNSTYLED,
   PRESET_INDUSTRIAL,
   SCENE_PRESETS,
   DEFAULT_PRESET,
-} from '@/core/presets'
+} from "@/core/presets";
 
-export { PresetProvider, usePreset } from '@/context/PresetContext'
+export { PresetProvider, usePreset } from "@/context/PresetContext";
 
 // ──────────────────────────────────────────────
 // Core — Entities
 // ──────────────────────────────────────────────
-export type { Box } from '@/core/entities/Box'
-export type { PlacedBox } from '@/core/entities/PlacedBox'
-export type { Pallet } from '@/core/entities/Pallet'
-export type { Separator } from '@/core/entities/Separator'
-export type { PalletFloor } from '@/core/entities/PalletFloor'
-export type { StackedPallet } from '@/core/entities/StackedPallet'
-export { getStackedPalletTotalHeight, getStackedPalletTotalWeight, ensureUniqueBoxIds } from '@/core/entities/StackedPallet'
-export type { PlacedPallet } from '@/core/entities/PlacedPallet'
-export type { Room } from '@/core/entities/Room'
-export type { Warehouse } from '@/core/entities/Warehouse'
-export type { Truck } from '@/core/entities/Truck'
+export type { Box } from "@/core/entities/Box";
+export type { PlacedBox } from "@/core/entities/PlacedBox";
+export type { Pallet } from "@/core/entities/Pallet";
+export type { Separator } from "@/core/entities/Separator";
+export type { PalletFloor } from "@/core/entities/PalletFloor";
+export type { StackedPallet } from "@/core/entities/StackedPallet";
+export {
+  getStackedPalletTotalHeight,
+  getStackedPalletTotalWeight,
+  ensureUniqueBoxIds,
+} from "@/core/entities/StackedPallet";
+export type { PlacedPallet } from "@/core/entities/PlacedPallet";
+export type { Room } from "@/core/entities/Room";
+export type { Warehouse } from "@/core/entities/Warehouse";
+export type { Truck } from "@/core/entities/Truck";
 
 // ──────────────────────────────────────────────
 // Core — Validation
@@ -110,80 +114,89 @@ export {
   // Polygon
   pointInPolygon,
   validatePalletInRoom,
-} from '@/core/validation'
+} from "@/core/validation";
 
 // ──────────────────────────────────────────────
 // Core — Packing Strategies
 // ──────────────────────────────────────────────
-export type { PackingStrategy, PackingResult } from '@/core/packing/PackingStrategy'
-export { ColumnStrategy } from '@/core/packing/ColumnStrategy'
-export { BinPacking3DStrategy } from '@/core/packing/BinPacking3D'
-export { TypeGroupStrategy } from '@/core/packing/TypeGroupStrategy'
-export { PackingRegistry, defaultRegistry } from '@/core/packing/registry'
+export type {
+  PackingStrategy,
+  PackingResult,
+} from "@/core/packing/PackingStrategy";
+export { ColumnStrategy } from "@/core/packing/ColumnStrategy";
+export { BinPacking3DStrategy } from "@/core/packing/BinPacking3D";
+export { TypeGroupStrategy } from "@/core/packing/TypeGroupStrategy";
+export { MaterialGroupingStrategy } from "@/core/packing/MaterialGroupingStrategy";
+export { MultiPalletBuilder } from "@/core/packing/MultiPalletBuilder";
+export type { MultiPalletPackOptions } from "@/core/packing/MultiPalletBuilder";
+export { PackingRegistry, defaultRegistry } from "@/core/packing/registry";
 
 // ──────────────────────────────────────────────
 // Core — Factories
 // ──────────────────────────────────────────────
-export { PalletFactory } from '@/core/factories/PalletFactory'
-export { TruckFactory } from '@/core/factories/TruckFactory'
-export { BoxFactory } from '@/core/factories/BoxFactory'
+export { PalletFactory } from "@/core/factories/PalletFactory";
+export { TruckFactory } from "@/core/factories/TruckFactory";
+export { BoxFactory } from "@/core/factories/BoxFactory";
 
 // ──────────────────────────────────────────────
 // Hooks
 // ──────────────────────────────────────────────
-export { usePhysicsValidation } from '@/hooks/usePhysicsValidation'
-export type { PhysicsValidationResult } from '@/hooks/usePhysicsValidation'
+export { usePhysicsValidation } from "@/hooks/usePhysicsValidation";
+export type { PhysicsValidationResult } from "@/hooks/usePhysicsValidation";
 
-export { usePalletMetrics } from '@/hooks/usePalletMetrics'
-export type { PalletMetricsResult } from '@/hooks/usePalletMetrics'
+export { usePalletMetrics } from "@/hooks/usePalletMetrics";
+export type { PalletMetricsResult } from "@/hooks/usePalletMetrics";
 
-export { usePackingStrategy } from '@/hooks/usePackingStrategy'
-export type { UsePackingStrategyReturn } from '@/hooks/usePackingStrategy'
+export { usePackingStrategy } from "@/hooks/usePackingStrategy";
+export type { UsePackingStrategyReturn } from "@/hooks/usePackingStrategy";
 
-export { useWarehouseValidation } from '@/hooks/useWarehouseValidation'
-export type { WarehouseValidationResult } from '@/hooks/useWarehouseValidation'
+export { useWarehouseValidation } from "@/hooks/useWarehouseValidation";
+export type { WarehouseValidationResult } from "@/hooks/useWarehouseValidation";
 
 // ──────────────────────────────────────────────
 // Components — Primitives
 // ──────────────────────────────────────────────
-export { BoxComponent } from '@/components/primitives/Box'
-export type { BoxProps } from '@/components/primitives/Box'
+export { BoxComponent } from "@/components/primitives/Box";
+export type { BoxProps } from "@/components/primitives/Box";
 
-export { PalletComponent } from '@/components/primitives/Pallet'
-export type { PalletComponentProps } from '@/components/primitives/Pallet'
+export { PalletComponent } from "@/components/primitives/Pallet";
+export type { PalletComponentProps } from "@/components/primitives/Pallet";
 
-export { SeparatorComponent } from '@/components/primitives/Separator'
-export type { SeparatorComponentProps } from '@/components/primitives/Separator'
+export { SeparatorComponent } from "@/components/primitives/Separator";
+export type { SeparatorComponentProps } from "@/components/primitives/Separator";
 
-export { StackedPalletComponent } from '@/components/primitives/StackedPallet'
-export type { StackedPalletComponentProps } from '@/components/primitives/StackedPallet'
+export { StackedPalletComponent } from "@/components/primitives/StackedPallet";
+export type { StackedPalletComponentProps } from "@/components/primitives/StackedPallet";
 
-export { Label } from '@/components/primitives/Label'
-export type { LabelProps } from '@/components/primitives/Label'
+export { Label } from "@/components/primitives/Label";
+export type { LabelProps } from "@/components/primitives/Label";
 
 // ──────────────────────────────────────────────
 // Components — Environments
 // ──────────────────────────────────────────────
-export { WarehouseEnvironment } from '@/components/environments/WarehouseEnvironment'
-export type { WarehouseEnvironmentProps } from '@/components/environments/WarehouseEnvironment'
+export { WarehouseEnvironment } from "@/components/environments/WarehouseEnvironment";
+export type { WarehouseEnvironmentProps } from "@/components/environments/WarehouseEnvironment";
 
-export { TruckEnvironment } from '@/components/environments/TruckEnvironment'
-export type { TruckEnvironmentProps } from '@/components/environments/TruckEnvironment'
+export { TruckEnvironment } from "@/components/environments/TruckEnvironment";
+export type { TruckEnvironmentProps } from "@/components/environments/TruckEnvironment";
 
 // ──────────────────────────────────────────────
 // Components — Controls
 // ──────────────────────────────────────────────
-export { CameraControlsComponent } from '@/components/controls/CameraControls'
-export type { CameraControlsProps, CameraPreset } from '@/components/controls/CameraControls'
+export { CameraControlsComponent } from "@/components/controls/CameraControls";
+export type {
+  CameraControlsProps,
+  CameraPreset,
+} from "@/components/controls/CameraControls";
 
 // ──────────────────────────────────────────────
 // Components — Scenes (pre-composed)
 // ──────────────────────────────────────────────
-export { PalletScene } from '@/components/scenes/PalletScene'
-export type { PalletSceneProps } from '@/components/scenes/PalletScene'
+export { PalletScene } from "@/components/scenes/PalletScene";
+export type { PalletSceneProps } from "@/components/scenes/PalletScene";
 
-export { TruckScene } from '@/components/scenes/TruckScene'
-export type { TruckSceneProps } from '@/components/scenes/TruckScene'
+export { TruckScene } from "@/components/scenes/TruckScene";
+export type { TruckSceneProps } from "@/components/scenes/TruckScene";
 
-export { WarehouseScene } from '@/components/scenes/WarehouseScene'
-export type { WarehouseSceneProps } from '@/components/scenes/WarehouseScene'
+export { WarehouseScene } from "@/components/scenes/WarehouseScene";
+export type { WarehouseSceneProps } from "@/components/scenes/WarehouseScene";
